@@ -1,0 +1,11 @@
+amends "pkl:Project"
+
+package {
+  name = "pkl-ci-common"
+  baseUri = "package://pkl-lang.org/pkl-ci-common"
+  version = "0.1.0"
+  packageZipUrl = "https://github.com/example/pkl-ci-libraries/releases/download/pkl-ci-common-\(version)/pkl-ci-common-\(version).zip"
+  description = "Common base classes and utilities for CI/CD pipeline configuration"
+  authors = List("CI Libraries Team")
+  license = "Apache-2.0"
+}

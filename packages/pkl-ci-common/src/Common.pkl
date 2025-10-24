@@ -1,0 +1,14 @@
+/// Common base module for CI/CD configuration
+///
+/// This module provides shared abstractions and utilities used across
+/// different CI/CD platforms (GitLab CI, GitHub Actions, etc.)
+module pkl.ci.common.Common
+
+import "Command.pkl"
+import "Duration.pkl"
+import "Validation.pkl"
+
+/// Re-export common classes for convenience
+typealias Command = Command.Command
+typealias Duration = Duration.Duration
+typealias Validation = Validation.Validation

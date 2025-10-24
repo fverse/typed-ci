@@ -1,0 +1,52 @@
+/// Common validation utilities for CI/CD configuration
+module pkl.ci.common.Validation
+
+/// Common validation utilities
+///
+/// Provides reusable validation functions for common patterns
+/// in CI/CD configuration, such as naming conventions and version formats.
+class Validation {
+  /// Validates that a name follows kebab-case convention
+  ///
+  /// Kebab-case uses lowercase letters, numbers, and hyphens.
+  /// Examples: "my-job", "build-stage", "test-123"
+  ///
+  /// Parameters:
+  /// - name: The string to validate
+  ///
+  /// Returns: true if the name is valid kebab-case, false otherwise
+  function isKebabCase(name: String): Boolean =
+    name.matches(Regex("^[a-z0-9]+(-[a-z0-9]+)*$"))
+  
+  /// Validates a semantic version string
+  ///
+  /// Checks if a version string follows semantic versioning format (semver).
+  /// Format: MAJOR.MINOR.PATCH (e.g., "1.0.0", "2.3.1")
+  /// Optionally supports pre-release and build metadata.
+  ///
+  /// Parameters:
+  /// - version: The version string to validate
+  ///
+  /// Returns: true if the version is valid semver, false otherwise
+  function isValidSemver(version: String): Boolean =
+    version.matches(Regex("^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$"))
+  
+  /// Validates that a string is not empty or whitespace-only
+  ///
+  /// Parameters:
+  /// - value: The string to validate
+  ///
+  /// Returns: true if the string contains non-whitespace characters, false otherwise
+  function isNotEmpty(value: String): Boolean =
+    value.trim().length > 0
+  
+  /// Validates that a string matches a given pattern
+  ///
+  /// Parameters:
+  /// - value: The string to validate
+  /// - pattern: The regex pattern to match against
+  ///
+  /// Returns: true if the string matches the pattern, false otherwise
+  function matchesPattern(value: String, pattern: String): Boolean =
+    value.matches(Regex(pattern))
+}

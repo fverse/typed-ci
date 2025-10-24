@@ -1,0 +1,33 @@
+/// Base class for CI/CD commands
+module pkl.ci.common.Command
+
+/// Base class for all CI/CD commands
+///
+/// Provides common properties for executing commands in CI/CD pipelines,
+/// including working directory and environment variable support.
+///
+/// Example:
+/// ```
+/// new Command {
+///   command = "npm install"
+///   workingDirectory = "./frontend"
+///   env {
+///     ["NODE_ENV"] = "production"
+///   }
+/// }
+/// ```
+abstract class Command {
+  /// The command to execute
+  command: String
+  
+  /// Working directory for command execution (optional)
+  ///
+  /// If specified, the command will be executed in this directory
+  /// relative to the repository root.
+  workingDirectory: String?
+  
+  /// Environment variables for command execution
+  ///
+  /// These variables will be available to the command during execution.
+  env: Mapping<String, String>?
+}
