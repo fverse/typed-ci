@@ -1,6 +1,6 @@
 # Typed CI
 
-Type-safe CI/CD pipeline configuration for GitLab CI and GitHub Actions using [Pkl](https://pkl-lang.org).
+Type-safe, validated CI/CD pipeline configuration for GitLab CI and GitHub Actions using [Pkl](https://pkl-lang.org).
 
 ## Overview
 
@@ -79,6 +79,7 @@ Then resolve dependencies:
 ```bash
 pkl project resolve
 ```
+For more information, check out the template-specific READMEs.
 
 ## License
 
