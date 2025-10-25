@@ -1,0 +1,32 @@
+/// GitHub Actions Workflow Tests
+///
+/// This module tests the GitHub Actions workflow configuration classes
+/// by rendering example configurations and validating their YAML output.
+module typed.github.actions.tests.GitHubActions
+
+amends "pkl:test"
+
+import "pkl:test"
+
+/// Test examples by rendering them to YAML
+/// These tests ensure that the library correctly generates valid GitHub Actions workflow YAML
+examples {
+  ["basic-workflow"] {
+    import("../examples/basic-workflow.pkl").output.text
+  }
+  ["matrix-build"] {
+    import("../examples/matrix-build.pkl").output.text
+  }
+  ["deploy-workflow"] {
+    import("../examples/deploy-workflow.pkl").output.text
+  }
+}
+
+/// Test validation and constraint checking
+facts {
+  ["Example files can be imported"] {
+    test.catchOrNull(() -> import("../examples/basic-workflow.pkl")) == null
+    test.catchOrNull(() -> import("../examples/matrix-build.pkl")) == null
+    test.catchOrNull(() -> import("../examples/deploy-workflow.pkl")) == null
+  }
+}

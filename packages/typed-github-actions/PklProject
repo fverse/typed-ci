@@ -1,0 +1,16 @@
+amends "pkl:Project"
+
+package {
+  name = "typed-github-actions"
+  baseUri = "package://pkl-lang.org/typed-github-actions"
+  version = "1.0.0"
+  packageZipUrl = "https://github.com/fverse/typed-ci/releases/download/typed-github-actions-\(version)/typed-github-actions-\(version).zip"
+  description = "Type-safe GitHub Actions workflow configuration"
+  authors {
+    "Fawaz <mail.fawazabdulla@gmail.com>"
+  }
+  license = "MIT"
+  sourceCode = "https://github.com/fverse/typed-ci"
+  sourceCodeUrlScheme = "https://github.com/fverse/typed-ci/blob/\(version)/%{path}#L%{line}-L%{endLine}"
+  issueTracker = "https://github.com/fverse/typed-ci/issues"
+}

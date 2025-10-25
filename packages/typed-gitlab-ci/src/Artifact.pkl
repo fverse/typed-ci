@@ -1,0 +1,81 @@
+module typed.gitlab.ci.Artifact
+
+import "../../../common/src/Duration.pkl"
+
+/// Artifact configuration
+class Artifact {
+  /// Paths to include as artifacts
+  paths: Listing<String>(
+    !isEmpty || untracked == true || reports != null,
+    "Artifact must specify 'paths', set 'untracked' to true, or define 'reports'"
+  )?
+  
+  /// Paths to exclude from artifacts
+  exclude: Listing<String>?
+  
+  /// How long to keep artifacts
+  expire_in: String?
+  
+  /// Whether artifacts should be exposed as job artifacts
+  expose_as: String(
+    paths != null,
+    "expose_as requires 'paths' to be defined"
+  )?
+  
+  /// Artifact name
+  name: String?
+  
+  /// Whether artifacts are untracked files
+  untracked: Boolean?
+  
+  /// When to upload artifacts
+  `when`: ("on_success"|"on_failure"|"always")?
+  
+  /// Reports configuration
+  reports: Reports?
+}
+
+/// Reports configuration for artifacts
+class Reports {
+  /// JUnit test reports
+  junit: String|Listing<String>?
+  
+  /// Code quality reports
+  codequality: String|Listing<String>?
+  
+  /// SAST reports
+  sast: String|Listing<String>?
+  
+  /// Dependency scanning reports
+  dependency_scanning: String|Listing<String>?
+  
+  /// Container scanning reports
+  container_scanning: String|Listing<String>?
+  
+  /// DAST reports
+  dast: String|Listing<String>?
+  
+  /// License scanning reports
+  license_scanning: String|Listing<String>?
+  
+  /// Performance reports
+  performance: String|Listing<String>?
+  
+  /// Metrics reports
+  metrics: String|Listing<String>?
+  
+  /// Coverage reports
+  coverage_report: CoverageReport?
+  
+  /// Dotenv reports
+  dotenv: String|Listing<String>?
+}
+
+/// Coverage report configuration
+class CoverageReport {
+  coverage_format: "cobertura"|"jacoco"
+  path: String(
+    !isEmpty,
+    "Coverage report path cannot be empty"
+  )
+}

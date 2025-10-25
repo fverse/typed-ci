@@ -1,0 +1,20 @@
+/// Variable configuration for GitLab CI
+///
+/// Variables can be simple string values or complex configurations
+/// with additional options.
+module typed.gitlab.ci.Variable
+
+/// Variable with additional configuration options
+class Variable {
+  /// Variable value
+  value: String
+  
+  /// Variable description
+  description: String?
+  
+  /// Whether to expand variable references
+  expand: Boolean?
+  
+  /// Variable options
+  options: Listing<String>?
+}

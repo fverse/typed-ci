@@ -1,0 +1,37 @@
+module typed.gitlab.ci.Cache
+
+/// Cache configuration
+class Cache {
+  /// Paths to cache
+  paths: Listing<String>(
+    !isEmpty,
+    "Cache paths cannot be empty. Specify at least one path to cache."
+  )
+  
+  /// Cache key
+  key: String|CacheKey?
+  
+  /// When to update the cache
+  policy: ("pull"|"push"|"pull-push")?
+  
+  /// Whether the job should not fail if cache is not present
+  untracked: Boolean?
+  
+  /// When to upload the cache
+  `when`: ("on_success"|"on_failure"|"always")?
+}
+
+/// Cache key configuration
+class CacheKey {
+  /// Static key or template
+  key: String?
+  
+  /// Files to generate key from
+  files: Listing<String>(
+    !isEmpty,
+    "Cache key files cannot be empty when specified"
+  )?
+  
+  /// Prefix for the key
+  prefix: String?
+}

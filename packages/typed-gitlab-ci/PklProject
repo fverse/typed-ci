@@ -1,0 +1,16 @@
+amends "pkl:Project"
+
+package {
+  name = "typed-gitlab-ci"
+  baseUri = "package://pkl-lang.org/typed-gitlab-ci"
+  version = "1.0.0"
+  packageZipUrl = "https://github.com/fverse/typed-ci/releases/download/typed-gitlab-ci-\(version)/typed-gitlab-ci-\(version).zip"
+  description = "Type-safe GitLab CI pipeline configuration"
+  authors {
+    "Fawaz <mail.fawazabdulla@gmail.com>"
+  }
+  license = "MIT"
+  sourceCode = "https://github.com/fverse/typed-ci"
+  sourceCodeUrlScheme = "https://github.com/fverse/typed-ci/blob/\(version)/%{path}#L%{line}-L%{endLine}"
+  issueTracker = "https://github.com/fverse/typed-ci/issues"
+}

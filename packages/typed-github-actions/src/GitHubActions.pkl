@@ -1,0 +1,83 @@
+/// GitHub Actions workflow configuration
+module typed.github.actions.GitHubActions
+
+import "Job.pkl"
+import "Event.pkl"
+
+/// Workflow name (displayed in GitHub UI)
+name: String
+
+/// Events that trigger this workflow
+///
+/// Can be a simple event name, a list of event names, or a mapping of event names to configurations.
+///
+/// Simple event: `on = "push"`
+/// Multiple events: `on = List("push", "pull_request")`
+/// Configured events: `on { push { branches = List("main") } }`
+on: Mapping<String, Event.PushEvent|Event.PullRequestEvent|Event.ScheduleEvent|Event.WorkflowDispatchEvent|Event.WorkflowCallEvent|Listing<Event.ScheduleEvent>|Mapping>
+
+/// Environment variables for all jobs
+env: Mapping<String, String>?
+
+/// Default settings for all jobs
+defaults: Job.DefaultSettings?
+
+/// Jobs in this workflow
+///
+/// Each job runs in a fresh runner instance.
+/// Jobs run in parallel unless dependencies are specified via `needs`.
+jobs: Mapping<String, Job.Job>
+
+/// Concurrency configuration
+///
+/// Controls how concurrent workflow runs are handled.
+concurrency: String|Job.ConcurrencyConfig?
+
+/// Permissions for all jobs
+///
+/// Can be set to "read-all", "write-all", or a detailed permissions object.
+permissions: Job.Permissions|"read-all"|"write-all"?
+
+/// Run name (displayed in GitHub UI for workflow runs)
+`run-name`: String?
+
+/// Constraint: Workflow must have at least one job
+local `_` = if (jobs.isEmpty) throw("""
+  Workflow validation failed: A workflow must have at least one job.
+  
+  Fix: Add one or more jobs to the workflow.
+  
+  Example:
+    jobs {
+      ["build"] = new Job.Job {
+        `runs-on` = "ubuntu-latest"
+        steps = List(
+          new Job.Step { uses = "actions/checkout@v4" }
+        )
+      }
+    }
+  """) else true
+
+/// Constraint: Job names should be valid identifiers
+local `_2` = jobs.keys.every((jobName) -> 
+  jobName.matches(Regex(#"^[a-zA-Z0-9_-]+$"#))
+) || throw("""
+  Workflow validation failed: Job names must contain only alphanumeric characters, hyphens, and underscores.
+  
+  Invalid job names: \(jobs.keys.filter((name) -> !name.matches(Regex(#"^[a-zA-Z0-9_-]+$"#))))
+  
+  Fix: Use only letters, numbers, hyphens, and underscores in job names.
+  """)
+
+/// Constraint: Validate job dependencies (needs)
+local `_3` = jobs.values.every((job) -> 
+  if (job.needs == null) true
+  else if (job.needs is String) jobs.containsKey(job.needs)
+  else job.needs.every((neededJob) -> jobs.containsKey(neededJob))
+) || throw("""
+  Workflow validation failed: Job dependencies reference non-existent jobs.
+  
+  Available jobs: \(jobs.keys.join(", "))
+  
+  Fix: Ensure all job names in 'needs' references exist in the workflow.
+  """)

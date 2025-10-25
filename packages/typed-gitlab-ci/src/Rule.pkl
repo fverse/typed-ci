@@ -1,0 +1,43 @@
+/// Rule configuration for conditional job execution
+///
+/// Rules determine when a job should run based on various conditions.
+module typed.gitlab.ci.Rule
+
+import "Variable.pkl"
+
+/// Rule for conditional execution
+class Rule {
+  /// Condition expression
+  `if`: String?
+  
+  /// Changes to files that trigger the rule
+  changes: Listing<String>(
+    !isEmpty,
+    "Rule changes cannot be empty when specified"
+  )?
+  
+  /// Whether the rule exists (for templates)
+  exists: Listing<String>(
+    !isEmpty,
+    "Rule exists cannot be empty when specified"
+  )?
+  
+  /// When to run the job if rule matches
+  `when`: ("on_success"|"on_failure"|"always"|"manual"|"delayed"|"never")?
+  
+  /// Variables to set if rule matches
+  variables: Mapping<String, String|Variable>?
+  
+  /// Allow failure if rule matches
+  allow_failure: Boolean?
+  
+  /// Start delay for delayed jobs
+  start_in: String(
+    `when` == "delayed",
+    "start_in can only be used when 'when' is set to 'delayed'"
+  )?
+  
+  /// Validates that at least one condition is specified
+  hidden hasCondition: Boolean =
+    `if` != null || changes != null || exists != null
+}

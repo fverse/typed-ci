@@ -1,0 +1,16 @@
+/// Script utilities for GitLab CI
+///
+/// Provides helper functions and types for working with scripts.
+module typed.gitlab.ci.Script
+
+/// Script execution configuration
+class ScriptConfig {
+  /// Commands to execute
+  commands: Listing<String>
+  
+  /// Working directory
+  workingDirectory: String?
+  
+  /// Environment variables
+  env: Mapping<String, String>?
+}

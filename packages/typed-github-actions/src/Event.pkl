@@ -1,0 +1,211 @@
+/// GitHub Actions workflow event triggers
+module typed.github.actions.Event
+
+/// Push event configuration
+class PushEvent {
+  /// Branches to trigger on
+  branches: Listing<String>?
+  
+  /// Branch patterns to ignore
+  `branches-ignore`: Listing<String>?
+  
+  /// Tags to trigger on
+  tags: Listing<String>?
+  
+  /// Tag patterns to ignore
+  `tags-ignore`: Listing<String>?
+  
+  /// Paths to trigger on
+  paths: Listing<String>?
+  
+  /// Path patterns to ignore
+  `paths-ignore`: Listing<String>?
+  
+  /// Constraint: Cannot use both 'branches' and 'branches-ignore'
+  local _ = if (branches != null && `branches-ignore` != null) throw("""
+    Push event validation failed: Cannot use both 'branches' and 'branches-ignore'.
+    
+    Fix: Use either 'branches' to include specific branches, or 'branches-ignore' to exclude branches.
+    """) else true
+  
+  /// Constraint: Cannot use both 'tags' and 'tags-ignore'
+  local _ = if (tags != null && `tags-ignore` != null) throw("""
+    Push event validation failed: Cannot use both 'tags' and 'tags-ignore'.
+    
+    Fix: Use either 'tags' to include specific tags, or 'tags-ignore' to exclude tags.
+    """) else true
+  
+  /// Constraint: Cannot use both 'paths' and 'paths-ignore'
+  local _ = if (paths != null && `paths-ignore` != null) throw("""
+    Push event validation failed: Cannot use both 'paths' and 'paths-ignore'.
+    
+    Fix: Use either 'paths' to include specific paths, or 'paths-ignore' to exclude paths.
+    """) else true
+}
+
+/// Pull request event configuration
+class PullRequestEvent {
+  /// Activity types that trigger the workflow
+  types: Listing<"opened"|"synchronize"|"reopened"|"closed"|"assigned"|"unassigned"|"labeled"|"unlabeled"|"edited"|"ready_for_review"|"review_requested"|"review_request_removed">?
+  
+  /// Branches to trigger on
+  branches: Listing<String>?
+  
+  /// Branch patterns to ignore
+  `branches-ignore`: Listing<String>?
+  
+  /// Paths to trigger on
+  paths: Listing<String>?
+  
+  /// Path patterns to ignore
+  `paths-ignore`: Listing<String>?
+  
+  /// Constraint: Cannot use both 'branches' and 'branches-ignore'
+  local _ = if (branches != null && `branches-ignore` != null) throw("""
+    Pull request event validation failed: Cannot use both 'branches' and 'branches-ignore'.
+    
+    Fix: Use either 'branches' to include specific branches, or 'branches-ignore' to exclude branches.
+    """) else true
+  
+  /// Constraint: Cannot use both 'paths' and 'paths-ignore'
+  local _ = if (paths != null && `paths-ignore` != null) throw("""
+    Pull request event validation failed: Cannot use both 'paths' and 'paths-ignore'.
+    
+    Fix: Use either 'paths' to include specific paths, or 'paths-ignore' to exclude paths.
+    """) else true
+}
+
+/// Schedule event configuration (cron)
+class ScheduleEvent {
+  /// Cron schedule expression
+  cron: String
+  
+  /// Constraint: Cron expression should not be empty
+  local _ = if (cron.isEmpty) throw("""
+    Schedule event validation failed: Cron expression cannot be empty.
+    
+    Fix: Provide a valid cron expression.
+    
+    Example: cron = "0 0 * * *"  // Daily at midnight
+    """) else true
+}
+
+/// Workflow dispatch event (manual trigger)
+class WorkflowDispatchEvent {
+  /// Input parameters for manual workflow runs
+  inputs: Mapping<String, WorkflowInput>?
+}
+
+/// Input definition for workflow_dispatch
+class WorkflowInput {
+  /// Description of the input
+  description: String?
+  
+  /// Whether the input is required
+  required: Boolean?
+  
+  /// Default value
+  default: String?
+  
+  /// Input type
+  type: "string"|"boolean"|"choice"|"environment"?
+  
+  /// Options for choice type
+  options: Listing<String>?
+  
+  /// Constraint: 'options' is required when type is 'choice'
+  local _ = if (type == "choice" && (options == null || options.isEmpty)) throw("""
+    Workflow input validation failed: Input type 'choice' requires 'options' to be specified.
+    
+    Fix: Provide a list of options for the choice input.
+    
+    Example:
+      new WorkflowInput {
+        type = "choice"
+        options = List("option1", "option2", "option3")
+      }
+    """) else true
+  
+  /// Constraint: 'options' should only be used with 'choice' type
+  local _ = if (options != null && type != "choice") throw("""
+    Workflow input validation failed: 'options' can only be used with type 'choice'.
+    
+    Current type: \(type)
+    
+    Fix: Either change type to 'choice' or remove 'options'.
+    """) else true
+}
+
+/// Workflow call event (reusable workflows)
+class WorkflowCallEvent {
+  /// Input parameters
+  inputs: Mapping<String, WorkflowCallInput>?
+  
+  /// Secrets
+  secrets: Mapping<String, WorkflowCallSecret>?
+  
+  /// Outputs
+  outputs: Mapping<String, WorkflowCallOutput>?
+}
+
+/// Input definition for workflow_call
+class WorkflowCallInput {
+  /// Description of the input
+  description: String?
+  
+  /// Whether the input is required
+  required: Boolean?
+  
+  /// Default value
+  default: String|Boolean|Int?
+  
+  /// Input type
+  type: "string"|"boolean"|"number"
+  
+  /// Constraint: Default value type must match input type
+  local _ = if (default != null) (
+    if (type == "string" && !(default is String)) throw("""
+      Workflow call input validation failed: Default value type mismatch.
+      
+      Expected type: string
+      Actual value: \(default)
+      
+      Fix: Provide a string value for the default.
+      """)
+    else if (type == "boolean" && !(default is Boolean)) throw("""
+      Workflow call input validation failed: Default value type mismatch.
+      
+      Expected type: boolean
+      Actual value: \(default)
+      
+      Fix: Provide a boolean value (true or false) for the default.
+      """)
+    else if (type == "number" && !(default is Int)) throw("""
+      Workflow call input validation failed: Default value type mismatch.
+      
+      Expected type: number
+      Actual value: \(default)
+      
+      Fix: Provide a numeric value for the default.
+      """)
+    else true
+  ) else true
+}
+
+/// Secret definition for workflow_call
+class WorkflowCallSecret {
+  /// Description of the secret
+  description: String?
+  
+  /// Whether the secret is required
+  required: Boolean?
+}
+
+/// Output definition for workflow_call
+class WorkflowCallOutput {
+  /// Description of the output
+  description: String?
+  
+  /// Value expression
+  value: String
+}

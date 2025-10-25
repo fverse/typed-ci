@@ -1,0 +1,47 @@
+/// Include configuration for external pipeline definitions
+///
+/// Allows including external YAML files or templates in the pipeline.
+module typed.gitlab.ci.Include
+
+/// Include external configuration
+class Include {
+  /// Local file path
+  local: String?
+  
+  /// Remote URL
+  remote: String?
+  
+  /// Template name
+  template: String?
+  
+  /// Project reference
+  project: String?
+  
+  /// File path in project
+  file: String|Listing<String>(
+    project != null,
+    "file can only be used with project"
+  )?
+  
+  /// Ref (branch/tag) in project
+  ref: String(
+    project != null,
+    "ref can only be used with project"
+  )?
+  
+  /// Rules for conditional inclusion
+  rules: Listing<IncludeRule>?
+  
+  /// Validates that exactly one include type is specified
+  hidden validIncludeType: Boolean =
+    List(local, remote, template, project).filter((it) -> it != null).length == 1
+}
+
+/// Rule for conditional inclusion
+class IncludeRule {
+  /// Condition expression
+  `if`: String?
+  
+  /// When to include
+  `when`: ("always"|"never")?
+}

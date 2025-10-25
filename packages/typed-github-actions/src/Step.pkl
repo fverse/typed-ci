@@ -1,0 +1,98 @@
+/// GitHub Actions workflow step
+module typed.github.actions.Step
+
+/// A single step in a GitHub Actions job
+///
+/// Each step can either run a command or use an action.
+/// Exactly one of `uses` or `run` must be specified.
+class Step {
+  /// Step name (displayed in the UI)
+  name: String?
+  
+  /// Step identifier (used for referencing outputs)
+  id: String?
+  
+  /// Conditional execution expression
+  ///
+  /// Example: `if = "success() && github.ref == 'refs/heads/main'"`
+  `if`: String?
+  
+  /// Action to use (mutually exclusive with run)
+  ///
+  /// Example: `uses = "actions/checkout@v4"`
+  uses: String?
+  
+  /// Command to run (mutually exclusive with uses)
+  ///
+  /// Example: `run = "npm install"`
+  run: String?
+  
+  /// Working directory for the step
+  `working-directory`: String?
+  
+  /// Shell to use for running commands
+  ///
+  /// Common values: "bash", "pwsh", "python", "sh", "cmd", "powershell"
+  shell: String?
+  
+  /// Environment variables for this step
+  env: Mapping<String, String>?
+  
+  /// Continue workflow even if this step fails
+  `continue-on-error`: Boolean?
+  
+  /// Timeout in minutes
+  `timeout-minutes`: Int?
+  
+  /// Action inputs (used with 'uses')
+  ///
+  /// These are passed to the action as configuration.
+  with: Mapping<String, String|Int|Boolean>?
+  
+  /// Validation: either 'uses' or 'run' must be specified, but not both
+  hidden isValid: Boolean = (uses != null) != (run != null)
+  
+  /// Constraint: Step must have either 'uses' or 'run'
+  local step = this
+  local _ = if (!isValid) throw("""
+    Step validation failed: A step must specify exactly one of 'uses' or 'run'.
+    
+    Current configuration:
+      - uses: \(uses != null ? "specified" : "not specified")
+      - run: \(run != null ? "specified" : "not specified")
+    
+    Fix: Provide either 'uses' to run an action, or 'run' to execute a command.
+    
+    Example with 'uses':
+      new Step {
+        name = "Checkout code"
+        uses = "actions/checkout@v4"
+      }
+    
+    Example with 'run':
+      new Step {
+        name = "Build project"
+        run = "make build"
+      }
+    """) else true
+  
+  /// Constraint: 'with' can only be used with 'uses'
+  local _ = if (with != null && uses == null) throw("""
+    Step validation failed: The 'with' parameter can only be used when 'uses' is specified.
+    
+    Current configuration has 'with' but no 'uses'.
+    
+    Fix: Either add 'uses' to specify an action, or remove 'with'.
+    """) else true
+  
+  /// Constraint: Action reference should be valid format
+  local _ = if (uses != null && !uses.matches(Regex(#"^[a-zA-Z0-9_-]+/[a-zA-Z0-9_-]+@.+$|^\./.*$"#))) throw("""
+    Step validation failed: Invalid action reference format.
+    
+    Action reference: \(uses)
+    
+    Valid formats:
+      - owner/repo@ref (e.g., "actions/checkout@v4")
+      - ./path/to/action (local action)
+    """) else true
+}

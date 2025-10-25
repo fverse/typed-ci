@@ -1,0 +1,47 @@
+/// Basic GitLab CI Pipeline Example
+///
+/// This example demonstrates a simple build job that compiles a project
+/// and saves the build artifacts.
+///
+/// To use this example:
+/// 1. Render to YAML: pkl eval -f yaml basic-pipeline.pkl > .gitlab-ci.yml
+/// 2. Commit the generated .gitlab-ci.yml to your repository
+module basic.pipeline
+
+output {
+  renderer = new YamlRenderer {}
+}
+
+stages {
+  "build"
+}
+
+jobs {
+  ["build-job"] {
+    stage = "build"
+    image = "node:18"
+    script {
+      "echo 'Installing dependencies...'"
+      "npm install"
+      "echo 'Building project...'"
+      "npm run build"
+    }
+    artifacts {
+      paths {
+        "dist/"
+        "build/"
+      }
+      expire_in = "1 week"
+    }
+    cache {
+      paths {
+        "node_modules/"
+      }
+      key {
+        files {
+          "package-lock.json"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,32 @@
+/// GitHub Actions environment configuration
+module typed.github.actions.Environment
+
+/// Environment configuration for deployments
+class Environment {
+  /// Environment name
+  name: String
+  
+  /// Environment URL
+  url: String?
+  
+  /// Deployment protection rules
+  protection_rules: ProtectionRules?
+}
+
+/// Protection rules for environments
+class ProtectionRules {
+  /// Required reviewers
+  reviewers: Listing<Reviewer>?
+  
+  /// Wait timer in minutes
+  `wait-timer`: Int?
+}
+
+/// Reviewer configuration
+class Reviewer {
+  /// Reviewer type
+  type: "User"|"Team"
+  
+  /// Reviewer ID
+  id: Int
+}

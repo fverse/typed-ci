@@ -1,0 +1,246 @@
+module typed.gitlab.ci.Job
+
+import "Artifact.pkl"
+import "Cache.pkl"
+import "Variable.pkl"
+import "Rule.pkl"
+import "../../../common/src/Duration.pkl"
+
+/// GitLab CI job configuration
+class Job {
+  /// Stage this job belongs to
+  ///
+  /// Must match one of the stages defined in the pipeline's `stages` list.
+  stage: String?
+  
+  /// Docker image to use
+  image: String|ImageConfig?
+  
+  /// Services (Docker containers) to run alongside the job
+  services: Listing<String|ServiceConfig>?
+  
+  /// Scripts to run
+  script: Listing<String>(!isEmpty)
+  
+  /// Scripts to run before main script
+  before_script: Listing<String>?
+  
+  /// Scripts to run after main script (always runs)
+  after_script: Listing<String>?
+  
+  /// Job dependencies (needs)
+  needs: Listing<String|NeedConfig>?
+  
+  /// Artifacts configuration
+  artifacts: Artifact?
+  
+  /// Cache configuration
+  cache: Cache|Listing<Cache>?
+  
+  /// Variables for this job
+  variables: Mapping<String, String|Variable>?
+  
+  /// Rules for when to run
+  rules: Listing<Rule>?
+  
+  /// Jobs to extend from
+  `extends`: String|Listing<String>?
+  
+  /// Timeout duration
+  timeout: String?
+  
+  /// Retry configuration
+  retry: Int|RetryConfig?
+  
+  /// Tags for runner selection
+  tags: Listing<String>?
+  
+  /// Allow failure
+  allow_failure: Boolean|AllowFailureConfig?
+  
+  /// When to run this job
+  `when`: ("on_success"|"on_failure"|"always"|"manual"|"delayed"|"never")?
+  
+  /// Start delay for delayed jobs
+  start_in: String(
+    `when` == "delayed" || this == null,
+    "start_in can only be used when 'when' is set to 'delayed'"
+  )?
+  
+  /// Environment configuration
+  environment: String|EnvironmentConfig?
+  
+  /// Coverage regex
+  coverage: String?
+  
+  /// Parallel execution
+  parallel: Int|ParallelConfig?
+  
+  /// Resource group
+  resource_group: String?
+  
+  /// Release configuration
+  release: ReleaseConfig?
+  
+  /// Trigger configuration for downstream pipelines
+  trigger: String|TriggerConfig?
+  
+  /// Interruptible flag
+  interruptible: Boolean?
+  
+  /// Only/except (deprecated, use rules instead)
+  only: OnlyExceptConfig?
+  except: OnlyExceptConfig?
+}
+
+/// Image configuration
+class ImageConfig {
+  name: String(
+    !isEmpty,
+    "Image name cannot be empty"
+  )
+  entrypoint: Listing<String>(
+    !isEmpty,
+    "Image entrypoint cannot be empty when specified"
+  )?
+}
+
+/// Service configuration
+class ServiceConfig {
+  name: String(
+    !isEmpty,
+    "Service name cannot be empty"
+  )
+  alias: String?
+  entrypoint: Listing<String>(
+    !isEmpty,
+    "Service entrypoint cannot be empty when specified"
+  )?
+  command: Listing<String>(
+    !isEmpty,
+    "Service command cannot be empty when specified"
+  )?
+}
+
+/// Need configuration for job dependencies
+class NeedConfig {
+  job: String(
+    !isEmpty,
+    "Need job name cannot be empty"
+  )
+  artifacts: Boolean?
+  project: String?
+  ref: String(
+    project != null,
+    "ref can only be used with project"
+  )?
+  pipeline: String(
+    project != null,
+    "pipeline can only be used with project"
+  )?
+}
+
+/// Retry configuration
+class RetryConfig {
+  max: Int(
+    this >= 0 && this <= 2,
+    "Retry max must be between 0 and 2"
+  )
+  `when`: Listing<"always"|"unknown_failure"|"script_failure"|"api_failure"|"stuck_or_timeout_failure"|"runner_system_failure"|"missing_dependency_failure"|"runner_unsupported"|"stale_schedule"|"job_execution_timeout"|"archived_failure"|"unmet_prerequisites"|"scheduler_failure"|"data_integrity_failure">(
+    !isEmpty,
+    "Retry when cannot be empty when specified"
+  )?
+}
+
+/// Allow failure configuration
+class AllowFailureConfig {
+  exit_codes: Int|Listing<Int>
+}
+
+/// Environment configuration
+class EnvironmentConfig {
+  name: String(
+    !isEmpty,
+    "Environment name cannot be empty"
+  )
+  url: String?
+  on_stop: String?
+  action: ("start"|"prepare"|"stop")?
+  auto_stop_in: String(
+    action == "start" || action == null,
+    "auto_stop_in can only be used with action 'start'"
+  )?
+  kubernetes: KubernetesConfig?
+  deployment_tier: ("production"|"staging"|"testing"|"development"|"other")?
+}
+
+/// Kubernetes configuration
+class KubernetesConfig {
+  namespace: String?
+}
+
+/// Parallel configuration
+class ParallelConfig {
+  matrix: Listing<Mapping<String, Listing<String|Int|Boolean>>>?
+}
+
+/// Release configuration
+class ReleaseConfig {
+  tag_name: String(
+    !isEmpty,
+    "Release tag_name cannot be empty"
+  )
+  description: String?
+  name: String?
+  ref: String?
+  milestones: Listing<String>(
+    !isEmpty,
+    "Release milestones cannot be empty when specified"
+  )?
+  released_at: String?
+  assets: ReleaseAssets?
+}
+
+/// Release assets configuration
+class ReleaseAssets {
+  links: Listing<ReleaseLink>?
+}
+
+/// Release link configuration
+class ReleaseLink {
+  name: String(
+    !isEmpty,
+    "Release link name cannot be empty"
+  )
+  url: String(
+    !isEmpty,
+    "Release link url cannot be empty"
+  )
+  filepath: String?
+  link_type: ("runbook"|"package"|"image"|"other")?
+}
+
+/// Trigger configuration
+class TriggerConfig {
+  project: String?
+  branch: String?
+  strategy: ("depend")?
+  include: Listing<TriggerInclude>?
+}
+
+/// Trigger include configuration
+class TriggerInclude {
+  `local`: String?
+  file: String?
+  template: String?
+  artifact: String?
+  job: String?
+}
+
+/// Only/Except configuration (deprecated)
+class OnlyExceptConfig {
+  refs: Listing<String>?
+  variables: Listing<String>?
+  changes: Listing<String>?
+  kubernetes: ("active")?
+}

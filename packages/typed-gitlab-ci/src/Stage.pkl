@@ -1,0 +1,8 @@
+module typed.gitlab.ci.Stage
+
+const BUILD = "build"
+const TEST = "test"
+const DEPLOY = "deploy"
+const REVIEW = "review"
+const STAGING = "staging"
+const PRODUCTION = "production"

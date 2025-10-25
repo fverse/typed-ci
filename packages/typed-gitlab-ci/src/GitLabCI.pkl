@@ -1,0 +1,129 @@
+/// GitLab CI Pipeline Configuration
+module typed.gitlab.ci.GitLabCI
+
+import "Job.pkl"
+import "Variable.pkl"
+import "Include.pkl"
+import "Cache.pkl"
+
+/// Root configuration for .gitlab-ci.yml
+open class Pipeline {
+  /// Global variables
+  variables: Mapping<String, String|Variable>?
+  
+  /// Pipeline stages (ordered)
+  stages: Listing<String>?
+  
+  /// Default settings for all jobs
+  default: DefaultSettings?
+  
+  /// Include external configurations
+  include: Listing<Include>?
+  
+  /// Jobs defined in this pipeline
+  jobs: Mapping<String, Job>
+  
+  /// Workflow configuration
+  workflow: WorkflowConfig?
+  
+  /// Global image
+  image: String|Job.ImageConfig?
+  
+  /// Global services
+  services: Listing<String|Job.ServiceConfig>?
+  
+  /// Global before_script
+  before_script: Listing<String>?
+  
+  /// Global after_script
+  after_script: Listing<String>?
+  
+  /// Global cache
+  cache: Cache|Listing<Cache>?
+  
+  /// Global retry
+  retry: Int|Job.RetryConfig?
+  
+  /// Global timeout
+  timeout: String?
+  
+  /// Global interruptible
+  interruptible: Boolean?
+  
+  /// Global tags
+  tags: Listing<String>?
+  
+  /// Validates that all job stage references exist in the stages list
+  hidden stagesValid: Boolean = 
+    stages == null || 
+    jobs.values.every((job) -> 
+      job.stage == null || stages.contains(job.stage)
+    )
+  
+  /// Validates that all job needs references exist
+  hidden needsValid: Boolean =
+    jobs.values.every((job) ->
+      job.needs == null ||
+      job.needs.every((need) ->
+        need is String && jobs.containsKey(need) ||
+        need is Job.NeedConfig && (need.project != null || jobs.containsKey(need.job))
+      )
+    )
+}
+
+/// Default settings for all jobs
+class DefaultSettings {
+  /// Default image
+  image: String|Job.ImageConfig?
+  
+  /// Default services
+  services: Listing<String|Job.ServiceConfig>?
+  
+  /// Default before_script
+  before_script: Listing<String>?
+  
+  /// Default after_script
+  after_script: Listing<String>?
+  
+  /// Default cache
+  cache: Cache|Listing<Cache>?
+  
+  /// Default retry
+  retry: Int|Job.RetryConfig?
+  
+  /// Default timeout
+  timeout: String?
+  
+  /// Default interruptible
+  interruptible: Boolean?
+  
+  /// Default tags
+  tags: Listing<String>?
+  
+  /// Default artifacts
+  artifacts: Job.Artifact?
+}
+
+/// Workflow configuration
+class WorkflowConfig {
+  /// Rules for the entire pipeline
+  rules: Listing<WorkflowRule>?
+  
+  /// Pipeline name
+  name: String?
+}
+
+/// Workflow rule
+class WorkflowRule {
+  /// Condition expression
+  `if`: String?
+  
+  /// Changes to files
+  changes: Listing<String>?
+  
+  /// When to run
+  `when`: ("always"|"never")?
+  
+  /// Variables to set
+  variables: Mapping<String, String|Variable>?
+}

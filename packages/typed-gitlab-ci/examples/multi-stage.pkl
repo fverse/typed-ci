@@ -1,0 +1,134 @@
+/// Multi-Stage GitLab CI Pipeline Example
+///
+/// This example demonstrates a complete pipeline with build, test, and deploy stages.
+/// Jobs in later stages depend on artifacts from earlier stages.
+///
+/// To use this example:
+/// 1. Render to YAML: pkl eval -f yaml multi-stage.pkl > .gitlab-ci.yml
+/// 2. Commit the generated .gitlab-ci.yml to your repository
+module multi.stage.pipeline
+
+output {
+  renderer = new YamlRenderer {}
+}
+
+variables {
+  ["NODE_VERSION"] = "18"
+  ["DEPLOY_ENV"] {
+    value = "staging"
+    description = "Target deployment environment"
+  }
+}
+
+stages {
+  "build"
+  "test"
+  "deploy"
+}
+
+default {
+  image = "node:${NODE_VERSION}"
+  before_script {
+    "echo 'Setting up environment...'"
+    "node --version"
+    "npm --version"
+  }
+  cache {
+    paths {
+      "node_modules/"
+    }
+    key {
+      files {
+        "package-lock.json"
+      }
+      prefix = "npm"
+    }
+    policy = "pull-push"
+  }
+}
+
+jobs {
+  ["build"] {
+    stage = "build"
+    script {
+      "npm ci"
+      "npm run build"
+    }
+    artifacts {
+      paths {
+        "dist/"
+      }
+      expire_in = "1 day"
+    }
+  }
+  
+  ["test:unit"] {
+    stage = "test"
+    needs {
+      "build"
+    }
+    script {
+      "npm ci"
+      "npm run test:unit"
+    }
+    artifacts {
+      `when` = "always"
+      reports {
+        junit = "test-results/junit.xml"
+        coverage_report {
+          coverage_format = "cobertura"
+          path = "coverage/cobertura-coverage.xml"
+        }
+      }
+    }
+    coverage = "/All files[^|]*\\|[^|]*\\s+([\\d\\.]+)/"
+  }
+  
+  ["test:integration"] {
+    stage = "test"
+    needs {
+      "build"
+    }
+    services {
+      new {
+        name = "postgres:14"
+        alias = "db"
+      }
+    }
+    variables {
+      ["DATABASE_URL"] = "postgresql://postgres:password@db:5432/test"
+    }
+    script {
+      "npm ci"
+      "npm run test:integration"
+    }
+    artifacts {
+      `when` = "always"
+      reports {
+        junit = "test-results/integration-junit.xml"
+      }
+    }
+  }
+  
+  ["deploy:staging"] {
+    stage = "deploy"
+    needs {
+      "test:unit"
+      "test:integration"
+    }
+    script {
+      "echo 'Deploying to staging environment...'"
+      "npm run deploy -- --env=staging"
+    }
+    environment {
+      name = "staging"
+      url = "https://staging.example.com"
+      deployment_tier = "staging"
+    }
+    rules {
+      new {
+        `if` = "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"
+      }
+    }
+  }
+}

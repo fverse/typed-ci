@@ -1,0 +1,229 @@
+/// GitHub Actions workflow job
+module typed.github.actions.Job
+
+import "Step.pkl"
+import "Matrix.pkl"
+import "Environment.pkl"
+
+/// A job in a GitHub Actions workflow
+///
+/// Jobs run in parallel by default unless dependencies are specified via `needs`.
+class Job {
+  /// Job name (displayed in the UI)
+  name: String?
+  
+  /// Runner to execute the job on
+  ///
+  /// Can be a single runner label or a list of labels.
+  /// Common values: "ubuntu-latest", "windows-latest", "macos-latest"
+  ///
+  /// Example: `runs-on = "ubuntu-latest"`
+  /// Example: `runs-on = List("self-hosted", "linux")`
+  `runs-on`: String|Listing<String>
+  
+  /// Jobs that must complete before this job runs
+  ///
+  /// Example: `needs = "build"`
+  /// Example: `needs = List("build", "test")`
+  needs: String|Listing<String>?
+  
+  /// Conditional execution expression
+  ///
+  /// Example: `if = "github.event_name == 'push'"`
+  `if`: String?
+  
+  /// Steps to execute in this job
+  steps: Listing<Step>
+  
+  /// Environment variables for all steps in this job
+  env: Mapping<String, String>?
+  
+  /// Timeout in minutes (default: 360)
+  `timeout-minutes`: Int?
+  
+  /// Strategy configuration (matrix builds, fail-fast, etc.)
+  strategy: Strategy?
+  
+  /// Continue workflow even if this job fails
+  `continue-on-error`: Boolean?
+  
+  /// Container to run the job in
+  container: String|ContainerConfig?
+  
+  /// Service containers for this job
+  services: Mapping<String, ServiceConfig>?
+  
+  /// Environment to deploy to
+  environment: String|Environment?
+  
+  /// Concurrency configuration
+  concurrency: String|ConcurrencyConfig?
+  
+  /// Job outputs (accessible by dependent jobs)
+  outputs: Mapping<String, String>?
+  
+  /// Permissions for this job
+  permissions: Permissions|"read-all"|"write-all"?
+  
+  /// Default settings for all steps
+  defaults: DefaultSettings?
+  
+  /// Constraint: At least one step must be defined
+  local `_` = if (steps.isEmpty) throw("""
+    Job validation failed: A job must have at least one step.
+    
+    Fix: Add one or more steps to the job.
+    
+    Example:
+      new Job {
+        `runs-on` = "ubuntu-latest"
+        steps = List(
+          new Step { uses = "actions/checkout@v4" },
+          new Step { run = "make build" }
+        )
+      }
+    """) else true
+  
+  /// Constraint: Validate all steps
+  local `_2` = steps.every((step) -> step.isValid)
+  
+  /// Constraint: Runner label should not be empty
+  local runnerList = if (`runs-on` is String) List(`runs-on`) else `runs-on`
+  local `_3` = if (runnerList.any((label) -> label.isEmpty)) throw("""
+    Job validation failed: Runner labels cannot be empty.
+    
+    Fix: Provide valid runner labels such as "ubuntu-latest", "windows-latest", or "macos-latest".
+    """) else true
+  
+  /// Constraint: Timeout must be positive
+  local `_4` = if (`timeout-minutes` != null && `timeout-minutes` <= 0) throw("""
+    Job validation failed: Timeout must be a positive number of minutes.
+    
+    Current value: \(`timeout-minutes`)
+    
+    Fix: Set timeout-minutes to a positive integer (e.g., 30, 60, 360).
+    """) else true
+}
+
+/// Strategy configuration for matrix builds
+class Strategy {
+  /// Matrix configuration
+  matrix: Matrix?
+  
+  /// Stop all jobs if one fails (default: true)
+  `fail-fast`: Boolean?
+  
+  /// Maximum number of jobs to run in parallel
+  `max-parallel`: Int?
+}
+
+/// Container configuration
+class ContainerConfig {
+  /// Container image
+  image: String
+  
+  /// Container credentials
+  credentials: Credentials?
+  
+  /// Environment variables
+  env: Mapping<String, String>?
+  
+  /// Exposed ports
+  ports: Listing<Int>?
+  
+  /// Mounted volumes
+  volumes: Listing<String>?
+  
+  /// Container options
+  options: String?
+}
+
+/// Service container configuration
+class ServiceConfig {
+  /// Service image
+  image: String
+  
+  /// Service credentials
+  credentials: Credentials?
+  
+  /// Environment variables
+  env: Mapping<String, String>?
+  
+  /// Exposed ports
+  ports: Listing<Int>?
+  
+  /// Mounted volumes
+  volumes: Listing<String>?
+  
+  /// Service options
+  options: String?
+}
+
+/// Container credentials
+class Credentials {
+  /// Username
+  username: String
+  
+  /// Password
+  password: String
+}
+
+/// Concurrency configuration
+class ConcurrencyConfig {
+  /// Concurrency group name
+  group: String
+  
+  /// Cancel in-progress runs when a new run is triggered
+  `cancel-in-progress`: Boolean?
+}
+
+/// Permissions configuration
+class Permissions {
+  /// Actions permission
+  actions: "read"|"write"|"none"?
+  
+  /// Checks permission
+  checks: "read"|"write"|"none"?
+  
+  /// Contents permission
+  contents: "read"|"write"|"none"?
+  
+  /// Deployments permission
+  deployments: "read"|"write"|"none"?
+  
+  /// ID token permission
+  `id-token`: "read"|"write"|"none"?
+  
+  /// Issues permission
+  issues: "read"|"write"|"none"?
+  
+  /// Packages permission
+  packages: "read"|"write"|"none"?
+  
+  /// Pull requests permission
+  `pull-requests`: "read"|"write"|"none"?
+  
+  /// Repository projects permission
+  `repository-projects`: "read"|"write"|"none"?
+  
+  /// Security events permission
+  `security-events`: "read"|"write"|"none"?
+  
+  /// Statuses permission
+  statuses: "read"|"write"|"none"?
+}
+
+/// Default settings for steps
+class DefaultSettings {
+  /// Default run configuration
+  run: RunDefaults?
+}
+
+/// Default run configuration
+class RunDefaults {
+  /// Default shell
+  shell: String?
+  
+  /// Default working directory
+  `working-directory`: String?
+}

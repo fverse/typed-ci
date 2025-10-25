@@ -1,0 +1,50 @@
+/// GitHub Actions matrix strategy configuration
+module typed.github.actions.Matrix
+
+/// Matrix configuration for running jobs with multiple variable combinations
+class Matrix {
+  /// Matrix variables and their values
+  ///
+  /// Each key represents a variable name, and the value is a list of possible values.
+  /// The job will run once for each combination of values.
+  ///
+  /// Example:
+  /// ```
+  /// new Matrix {
+  ///   ["os"] = List("ubuntu-latest", "windows-latest", "macos-latest")
+  ///   ["node"] = List(16, 18, 20)
+  /// }
+  /// ```
+  [String]: Listing<String|Int|Boolean>
+  
+  /// Include additional matrix combinations
+  include: Listing<Mapping<String, String|Int|Boolean>>?
+  
+  /// Exclude specific matrix combinations
+  exclude: Listing<Mapping<String, String|Int|Boolean>>?
+  
+  /// Constraint: Matrix must have at least one variable (excluding include/exclude)
+  local matrixVars = this.toMap().keys.filter((key) -> key != "include" && key != "exclude")
+  local _ = if (matrixVars.isEmpty) throw("""
+    Matrix validation failed: Matrix must define at least one variable.
+    
+    Fix: Add one or more matrix variables with their possible values.
+    
+    Example:
+      new Matrix {
+        ["os"] = List("ubuntu-latest", "windows-latest")
+        ["node"] = List(16, 18, 20)
+      }
+    """) else true
+  
+  /// Constraint: Each matrix variable must have at least one value
+  local _ = this.toMap().entries
+    .filter((entry) -> entry.key != "include" && entry.key != "exclude")
+    .every((entry) -> 
+      if (entry.value is Listing) !entry.value.isEmpty
+      else true
+    ) || throw("""
+    Matrix validation failed: Each matrix variable must have at least one value.
+    
+    Fix: Ensure all matrix variables have non-empty value lists.
+    """)

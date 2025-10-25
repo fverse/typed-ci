@@ -1,0 +1,32 @@
+/// GitLab CI Pipeline Tests
+///
+/// This module tests the GitLab CI pipeline configuration classes
+/// by rendering example configurations and validating their YAML output.
+module typed.gitlab.ci.tests.GitLabCI
+
+amends "pkl:test"
+
+import "pkl:test"
+
+/// Test examples by rendering them to YAML
+/// These tests ensure that the library correctly generates valid GitLab CI YAML
+examples {
+  ["basic-pipeline"] {
+    import("../examples/basic-pipeline.pkl").output.text
+  }
+  ["multi-stage-pipeline"] {
+    import("../examples/multi-stage.pkl").output.text
+  }
+  ["deploy-pipeline"] {
+    import("../examples/deploy-pipeline.pkl").output.text
+  }
+}
+
+/// Test validation and constraint checking
+facts {
+  ["Example files can be imported"] {
+    test.catchOrNull(() -> import("../examples/basic-pipeline.pkl")) == null
+    test.catchOrNull(() -> import("../examples/multi-stage.pkl")) == null
+    test.catchOrNull(() -> import("../examples/deploy-pipeline.pkl")) == null
+  }
+}

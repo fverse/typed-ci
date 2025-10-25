@@ -1,0 +1,282 @@
+examples {
+  ["basic-workflow"] {
+    """
+    name: CI
+    'on':
+      push:
+        branches:
+        - main
+      pull_request:
+        branches:
+        - main
+    jobs:
+      build:
+        name: Build
+        runs-on: ubuntu-latest
+        steps:
+        - name: Checkout code
+          uses: actions/checkout@v4
+        - name: Setup Node.js
+          uses: actions/setup-node@v4
+          with:
+            node-version: '20'
+            cache: npm
+        - name: Install dependencies
+          run: npm ci
+        - name: Build project
+          run: npm run build
+        - name: Upload build artifacts
+          uses: actions/upload-artifact@v3
+          with:
+            name: build
+            path: dist/
+    
+    """
+  }
+  ["matrix-build"] {
+    """
+    name: Matrix Build
+    'on':
+      push:
+        branches:
+        - main
+        - develop
+      pull_request:
+        branches:
+        - main
+    env:
+      CI: 'true'
+    jobs:
+      test:
+        name: Test on ${{ matrix.os }} with Node ${{ matrix.node }}
+        runs-on: ${{ matrix.os }}
+        strategy:
+          matrix:
+            os:
+            - ubuntu-latest
+            - windows-latest
+            - macos-latest
+            node:
+            - 16
+            - 18
+            - 20
+            exclude:
+            - os: macos-latest
+              node: 16
+          fail-fast: false
+          max-parallel: 6
+        steps:
+        - name: Checkout code
+          uses: actions/checkout@v4
+        - name: Setup Node.js ${{ matrix.node }}
+          uses: actions/setup-node@v4
+          with:
+            node-version: ${{ matrix.node }}
+            cache: npm
+        - name: Install dependencies
+          run: npm ci
+        - name: Run linter
+          run: npm run lint
+        - name: Run tests
+          run: npm test
+        - name: Upload coverage
+          uses: codecov/codecov-action@v3
+          with:
+            files: ./coverage/coverage-final.json
+            flags: unittests-${{ matrix.os }}-node${{ matrix.node }}
+          if: matrix.os == 'ubuntu-latest'
+      build:
+        name: Build on ${{ matrix.platform }}
+        runs-on: ${{ matrix.os }}
+        needs: test
+        strategy:
+          matrix:
+            include:
+            - os: ubuntu-latest
+              platform: linux
+              arch: x64
+            - os: ubuntu-latest
+              platform: linux
+              arch: arm64
+            - os: windows-latest
+              platform: windows
+              arch: x64
+            - os: macos-latest
+              platform: darwin
+              arch: x64
+            - os: macos-latest
+              platform: darwin
+              arch: arm64
+        steps:
+        - name: Checkout code
+          uses: actions/checkout@v4
+        - name: Setup Node.js
+          uses: actions/setup-node@v4
+          with:
+            node-version: '20'
+            cache: npm
+        - name: Install dependencies
+          run: npm ci
+        - name: Build for ${{ matrix.platform }}-${{ matrix.arch }}
+          run: npm run build -- --platform=${{ matrix.platform }} --arch=${{ matrix.arch }}
+        - name: Upload build artifacts
+          uses: actions/upload-artifact@v3
+          with:
+            name: build-${{ matrix.platform }}-${{ matrix.arch }}
+            path: dist/
+            retention-days: '7'
+    
+    """
+  }
+  ["deploy-workflow"] {
+    """
+    name: Deploy Application
+    'on':
+      push:
+        branches:
+        - main
+      workflow_dispatch: {}
+    env:
+      NODE_VERSION: '20'
+      REGISTRY: ghcr.io
+    jobs:
+      build:
+        name: Build and Test
+        runs-on: ubuntu-latest
+        permissions:
+          contents: read
+          packages: write
+        steps:
+        - name: Checkout code
+          uses: actions/checkout@v4
+        - name: Setup Node.js
+          uses: actions/setup-node@v4
+          with:
+            node-version: ${{ env.NODE_VERSION }}
+            cache: npm
+        - name: Install dependencies
+          run: npm ci
+        - name: Run tests
+          run: npm test
+        - name: Build application
+          run: npm run build
+        - name: Login to Container Registry
+          uses: docker/login-action@v3
+          with:
+            registry: ${{ env.REGISTRY }}
+            username: ${{ github.actor }}
+            password: ${{ secrets.GITHUB_TOKEN }}
+        - name: Build and push Docker image
+          uses: docker/build-push-action@v5
+          with:
+            context: '.'
+            push: 'true'
+            tags: ${{ env.REGISTRY }}/${{ github.repository }}:${{ github.sha }},${{ env.REGISTRY }}/${{ github.repository }}:latest
+        - name: Upload build artifacts
+          uses: actions/upload-artifact@v3
+          with:
+            name: build-artifacts
+            path: dist/
+        outputs:
+          image-tag: ${{ github.sha }}
+      deploy-staging:
+        name: Deploy to Staging
+        runs-on: ubuntu-latest
+        needs: build
+        environment:
+          name: staging
+          url: https://staging.example.com
+        steps:
+        - name: Checkout code
+          uses: actions/checkout@v4
+        - name: Download build artifacts
+          uses: actions/download-artifact@v3
+          with:
+            name: build-artifacts
+            path: dist/
+        - name: Configure AWS credentials
+          uses: aws-actions/configure-aws-credentials@v4
+          with:
+            aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+            aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            aws-region: us-east-1
+        - name: Deploy to ECS
+          run: aws ecs update-service --cluster staging-cluster --service my-app-service --force-new-deployment --task-definition my-app:${{ needs.build.outputs.image-tag }}
+        - name: Wait for deployment
+          run: aws ecs wait services-stable --cluster staging-cluster --services my-app-service
+          timeout-minutes: 10
+        - name: Run smoke tests
+          run: npm run test:smoke -- --url=https://staging.example.com
+      deploy-production:
+        name: Deploy to Production
+        runs-on: ubuntu-latest
+        needs:
+        - build
+        - deploy-staging
+        environment:
+          name: production
+          url: https://example.com
+        permissions:
+          contents: read
+          deployments: write
+        steps:
+        - name: Checkout code
+          uses: actions/checkout@v4
+        - name: Download build artifacts
+          uses: actions/download-artifact@v3
+          with:
+            name: build-artifacts
+            path: dist/
+        - name: Configure AWS credentials
+          uses: aws-actions/configure-aws-credentials@v4
+          with:
+            aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+            aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            aws-region: us-east-1
+        - name: Deploy to ECS
+          run: aws ecs update-service --cluster production-cluster --service my-app-service --force-new-deployment --task-definition my-app:${{ needs.build.outputs.image-tag }}
+        - name: Wait for deployment
+          run: aws ecs wait services-stable --cluster production-cluster --services my-app-service
+          timeout-minutes: 15
+        - name: Run smoke tests
+          run: npm run test:smoke -- --url=https://example.com
+        - name: Notify deployment
+          uses: slackapi/slack-github-action@v1
+          with:
+            channel-id: deployments
+            slack-message: Production deployment completed successfully! 🚀
+          env:
+            SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+      rollback:
+        name: Rollback Production
+        runs-on: ubuntu-latest
+        needs: deploy-production
+        if: failure()
+        environment:
+          name: production
+          url: https://example.com
+        steps:
+        - name: Configure AWS credentials
+          uses: aws-actions/configure-aws-credentials@v4
+          with:
+            aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+            aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            aws-region: us-east-1
+        - name: Rollback deployment
+          run: aws ecs update-service --cluster production-cluster --service my-app-service --force-new-deployment --task-definition my-app:previous
+        - name: Notify rollback
+          uses: slackapi/slack-github-action@v1
+          with:
+            channel-id: deployments
+            slack-message: ⚠️ Production deployment failed and was rolled back
+          env:
+            SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+    
+    """
+  }
+}
+facts {
+  ["Example files can be imported"] {
+    true
+  }
+}

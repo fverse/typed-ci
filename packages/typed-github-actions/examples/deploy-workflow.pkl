@@ -1,0 +1,276 @@
+/// Deployment GitHub Actions Workflow Example
+///
+/// This example demonstrates a complete deployment workflow with:
+/// - Build and test stages
+/// - Deployment to staging and production environments
+/// - Environment protection and secrets management
+/// - Manual approval for production deployment
+///
+/// To use this example:
+/// 1. Render to YAML: pkl eval -f yaml deploy-workflow.pkl > .github/workflows/deploy.yml
+/// 2. Commit the generated workflow file to your repository
+/// 3. Configure environment secrets in GitHub repository settings
+module deploy.workflow
+
+output {
+  renderer = new YamlRenderer {}
+}
+
+name = "Deploy Application"
+
+on {
+  push {
+    branches {
+      "main"
+    }
+  }
+  workflow_dispatch = new {}
+}
+
+env {
+  ["NODE_VERSION"] = "20"
+  ["REGISTRY"] = "ghcr.io"
+}
+
+jobs {
+  ["build"] {
+    name = "Build and Test"
+    `runs-on` = "ubuntu-latest"
+    
+    permissions {
+      contents = "read"
+      packages = "write"
+    }
+    
+    steps {
+      new {
+        name = "Checkout code"
+        uses = "actions/checkout@v4"
+      }
+      
+      new {
+        name = "Setup Node.js"
+        uses = "actions/setup-node@v4"
+        with {
+          ["node-version"] = "${{ env.NODE_VERSION }}"
+          ["cache"] = "npm"
+        }
+      }
+      
+      new {
+        name = "Install dependencies"
+        run = "npm ci"
+      }
+      
+      new {
+        name = "Run tests"
+        run = "npm test"
+      }
+      
+      new {
+        name = "Build application"
+        run = "npm run build"
+      }
+      
+      new {
+        name = "Login to Container Registry"
+        uses = "docker/login-action@v3"
+        with {
+          ["registry"] = "${{ env.REGISTRY }}"
+          ["username"] = "${{ github.actor }}"
+          ["password"] = "${{ secrets.GITHUB_TOKEN }}"
+        }
+      }
+      
+      new {
+        name = "Build and push Docker image"
+        uses = "docker/build-push-action@v5"
+        with {
+          ["context"] = "."
+          ["push"] = "true"
+          ["tags"] = "${{ env.REGISTRY }}/${{ github.repository }}:${{ github.sha }},${{ env.REGISTRY }}/${{ github.repository }}:latest"
+        }
+      }
+      
+      new {
+        name = "Upload build artifacts"
+        uses = "actions/upload-artifact@v3"
+        with {
+          ["name"] = "build-artifacts"
+          ["path"] = "dist/"
+        }
+      }
+    }
+    
+    outputs {
+      ["image-tag"] = "${{ github.sha }}"
+    }
+  }
+  
+  ["deploy-staging"] {
+    name = "Deploy to Staging"
+    `runs-on` = "ubuntu-latest"
+    needs = "build"
+    
+    environment {
+      name = "staging"
+      url = "https://staging.example.com"
+    }
+    
+    steps {
+      new {
+        name = "Checkout code"
+        uses = "actions/checkout@v4"
+      }
+      
+      new {
+        name = "Download build artifacts"
+        uses = "actions/download-artifact@v3"
+        with {
+          ["name"] = "build-artifacts"
+          ["path"] = "dist/"
+        }
+      }
+      
+      new {
+        name = "Configure AWS credentials"
+        uses = "aws-actions/configure-aws-credentials@v4"
+        with {
+          ["aws-access-key-id"] = "${{ secrets.AWS_ACCESS_KEY_ID }}"
+          ["aws-secret-access-key"] = "${{ secrets.AWS_SECRET_ACCESS_KEY }}"
+          ["aws-region"] = "us-east-1"
+        }
+      }
+      
+      new {
+        name = "Deploy to ECS"
+        run = "aws ecs update-service --cluster staging-cluster --service my-app-service --force-new-deployment --task-definition my-app:${{ needs.build.outputs.image-tag }}"
+      }
+      
+      new {
+        name = "Wait for deployment"
+        run = "aws ecs wait services-stable --cluster staging-cluster --services my-app-service"
+        `timeout-minutes` = 10
+      }
+      
+      new {
+        name = "Run smoke tests"
+        run = "npm run test:smoke -- --url=https://staging.example.com"
+      }
+    }
+  }
+  
+  ["deploy-production"] {
+    name = "Deploy to Production"
+    `runs-on` = "ubuntu-latest"
+    needs {
+      "build"
+      "deploy-staging"
+    }
+    
+    environment {
+      name = "production"
+      url = "https://example.com"
+    }
+    
+    permissions {
+      contents = "read"
+      deployments = "write"
+    }
+    
+    steps {
+      new {
+        name = "Checkout code"
+        uses = "actions/checkout@v4"
+      }
+      
+      new {
+        name = "Download build artifacts"
+        uses = "actions/download-artifact@v3"
+        with {
+          ["name"] = "build-artifacts"
+          ["path"] = "dist/"
+        }
+      }
+      
+      new {
+        name = "Configure AWS credentials"
+        uses = "aws-actions/configure-aws-credentials@v4"
+        with {
+          ["aws-access-key-id"] = "${{ secrets.AWS_ACCESS_KEY_ID }}"
+          ["aws-secret-access-key"] = "${{ secrets.AWS_SECRET_ACCESS_KEY }}"
+          ["aws-region"] = "us-east-1"
+        }
+      }
+      
+      new {
+        name = "Deploy to ECS"
+        run = "aws ecs update-service --cluster production-cluster --service my-app-service --force-new-deployment --task-definition my-app:${{ needs.build.outputs.image-tag }}"
+      }
+      
+      new {
+        name = "Wait for deployment"
+        run = "aws ecs wait services-stable --cluster production-cluster --services my-app-service"
+        `timeout-minutes` = 15
+      }
+      
+      new {
+        name = "Run smoke tests"
+        run = "npm run test:smoke -- --url=https://example.com"
+      }
+      
+      new {
+        name = "Notify deployment"
+        uses = "slackapi/slack-github-action@v1"
+        with {
+          ["channel-id"] = "deployments"
+          ["slack-message"] = "Production deployment completed successfully! 🚀"
+        }
+        env {
+          ["SLACK_BOT_TOKEN"] = "${{ secrets.SLACK_BOT_TOKEN }}"
+        }
+      }
+    }
+  }
+  
+  ["rollback"] {
+    name = "Rollback Production"
+    `runs-on` = "ubuntu-latest"
+    needs = "deploy-production"
+    `if` = "failure()"
+    
+    environment {
+      name = "production"
+      url = "https://example.com"
+    }
+    
+    steps {
+      new {
+        name = "Configure AWS credentials"
+        uses = "aws-actions/configure-aws-credentials@v4"
+        with {
+          ["aws-access-key-id"] = "${{ secrets.AWS_ACCESS_KEY_ID }}"
+          ["aws-secret-access-key"] = "${{ secrets.AWS_SECRET_ACCESS_KEY }}"
+          ["aws-region"] = "us-east-1"
+        }
+      }
+      
+      new {
+        name = "Rollback deployment"
+        run = "aws ecs update-service --cluster production-cluster --service my-app-service --force-new-deployment --task-definition my-app:previous"
+      }
+      
+      new {
+        name = "Notify rollback"
+        uses = "slackapi/slack-github-action@v1"
+        with {
+          ["channel-id"] = "deployments"
+          ["slack-message"] = "⚠️ Production deployment failed and was rolled back"
+        }
+        env {
+          ["SLACK_BOT_TOKEN"] = "${{ secrets.SLACK_BOT_TOKEN }}"
+        }
+      }
+    }
+  }
+}
