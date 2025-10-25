@@ -1,0 +1,13 @@
+module pkl.ci.common.Command
+
+/// Base class for all CI/CD commands
+abstract class Command {
+  /// The command to execute
+  command: String
+  
+  /// Working directory for command execution (optional)
+  workingDirectory: String?
+  
+  /// Environment variables for command execution
+  env: Mapping<String, String>?
+}

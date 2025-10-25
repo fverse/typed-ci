@@ -1,0 +1,108 @@
+## GitHub Actions Workflow for typed-ci
+##
+## This workflow tests the typed-github-actions package by:
+## - Running Pkl tests
+## - Validating example configurations
+## - Ensuring all examples render to valid YAML
+
+name: Test typed-github-actions
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  PKL_VERSION: "0.26.3"
+
+jobs:
+  test-github-actions:
+    name: Test typed-github-actions package
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Pkl CLI
+        run: |
+          curl -L -o /usr/local/bin/pkl https://github.com/apple/pkl/releases/download/${PKL_VERSION}/pkl-linux-amd64
+          chmod +x /usr/local/bin/pkl
+          pkl --version
+
+      - name: Run Pkl tests
+        run: |
+          echo "Running Pkl tests for typed-github-actions package..."
+          cd packages/typed-github-actions
+          pkl test tests/GitHubActions.pkl
+
+  validate-github-actions-examples:
+    name: Validate typed-github-actions examples
+    runs-on: ubuntu-latest
+    needs: test-github-actions
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Pkl CLI
+        run: |
+          curl -L -o /usr/local/bin/pkl https://github.com/apple/pkl/releases/download/${PKL_VERSION}/pkl-linux-amd64
+          chmod +x /usr/local/bin/pkl
+          pkl --version
+
+      - name: Validate example configurations
+        run: |
+          echo "Validating typed-github-actions example configurations..."
+          cd packages/typed-github-actions/examples
+
+          echo "Validating basic-workflow.pkl..."
+          pkl eval -f yaml basic-workflow.pkl > /tmp/basic-workflow.yml
+          echo "✓ basic-workflow.pkl renders successfully"
+
+          echo "Validating matrix-build.pkl..."
+          pkl eval -f yaml matrix-build.pkl > /tmp/matrix-build.yml
+          echo "✓ matrix-build.pkl renders successfully"
+
+          echo "Validating deploy-workflow.pkl..."
+          pkl eval -f yaml deploy-workflow.pkl > /tmp/deploy-workflow.yml
+          echo "✓ deploy-workflow.pkl renders successfully"
+
+          echo "All examples validated successfully!"
+
+      - name: Upload rendered examples
+        uses: actions/upload-artifact@v4
+        with:
+          name: rendered-examples
+          path: /tmp/*.yml
+          retention-days: 1
+
+  validate-cross-package:
+    name: Validate both packages work together
+    runs-on: ubuntu-latest
+    needs: [test-github-actions, validate-github-actions-examples]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Pkl CLI
+        run: |
+          curl -L -o /usr/local/bin/pkl https://github.com/apple/pkl/releases/download/${PKL_VERSION}/pkl-linux-amd64
+          chmod +x /usr/local/bin/pkl
+          pkl --version
+
+      - name: Test typed-ci-common dependency
+        run: |
+          echo "Testing that both packages can use typed-ci-common..."
+          cd packages/typed-github-actions
+          pkl eval -f yaml examples/basic-workflow.pkl > /dev/null
+          echo "✓ typed-github-actions uses typed-ci-common successfully"
+
+          cd ../typed-gitlab-ci
+          pkl eval -f yaml examples/basic-pipeline.pkl > /dev/null
+          echo "✓ typed-gitlab-ci uses typed-ci-common successfully"
+
+          echo "Cross-package validation complete!"

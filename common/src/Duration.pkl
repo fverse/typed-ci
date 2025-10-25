@@ -1,31 +1,18 @@
-/// Duration utilities for CI/CD configuration
 module pkl.ci.common.Duration
 
 /// Duration with validation and conversion utilities
-///
 /// Represents a time duration with a value and unit, providing
 /// conversion methods for different time representations.
-///
-/// Example:
-/// ```
-/// new Duration {
-///   value = 30
-///   unit = "minutes"
-/// }
-/// ```
 class Duration {
   /// The numeric value of the duration
-  ///
   /// Must be a positive integer.
   value: Int(this > 0, "Duration value must be positive")
   
   /// The unit of time for the duration
-  ///
   /// Supported units: seconds, minutes, hours
   unit: "seconds"|"minutes"|"hours"
   
   /// Converts the duration to seconds
-  ///
   /// Returns the total number of seconds represented by this duration.
   function toSeconds(): Int = when (unit) {
     "seconds" -> value
@@ -35,7 +22,6 @@ class Duration {
   }
   
   /// Converts the duration to minutes
-  ///
   /// Returns the total number of minutes represented by this duration.
   /// Fractional minutes are rounded down.
   function toMinutes(): Int = when (unit) {
@@ -46,7 +32,6 @@ class Duration {
   }
   
   /// Converts the duration to hours
-  ///
   /// Returns the total number of hours represented by this duration.
   /// Fractional hours are rounded down.
   function toHours(): Int = when (unit) {

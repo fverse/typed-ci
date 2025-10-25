@@ -8,7 +8,7 @@ import "Command.pkl"
 import "Duration.pkl"
 import "Validation.pkl"
 
-/// Re-export common classes for convenience
+/// Re-export
 typealias Command = Command.Command
 typealias Duration = Duration.Duration
 typealias Validation = Validation.Validation
