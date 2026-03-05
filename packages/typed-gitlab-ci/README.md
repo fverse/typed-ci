@@ -17,7 +17,7 @@ amends "pkl:Project"
 
 dependencies {
   ["typed-gitlab-ci"] {
-    uri = "package://pkl-lang.org/typed-gitlab-ci@0.1.0"
+    uri = "package://pkl-lang.org/typed-gitlab-ci@1.0.0"
   }
 }
 ```
@@ -33,7 +33,7 @@ pkl project resolve
 You can also import directly using the package URI:
 
 ```pkl
-import "package://pkl-lang.org/typed-gitlab-ci@0.1.0/GitLabCI.pkl"
+import "package://pkl-lang.org/typed-gitlab-ci@1.0.0/GitLabCI.pkl"
 ```
 
 ## Quick Start
@@ -41,7 +41,7 @@ import "package://pkl-lang.org/typed-gitlab-ci@0.1.0/GitLabCI.pkl"
 Create a file `pipeline.pkl`:
 
 ```pkl
-amends "package://pkl-lang.org/typed-gitlab-ci@0.1.0/GitLabCI.pkl"
+amends "package://pkl-lang.org/typed-gitlab-ci@1.0.0/GitLabCI.pkl"
 
 output {
   renderer = new YamlRenderer {}
@@ -66,7 +66,7 @@ jobs {
       }
     }
   }
-  
+
   ["test-job"] {
     stage = "test"
     image = "node:18"
@@ -153,7 +153,7 @@ jobs {
     stage = "build"
     script { "make build" }
   }
-  
+
   ["test"] {
     stage = "test"
     needs { "build" }  // Runs immediately after build completes
@@ -182,4 +182,3 @@ jobs {
 ## License
 
 MIT
-

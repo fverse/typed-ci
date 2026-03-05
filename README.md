@@ -13,7 +13,7 @@ Type-safe, validated CI/CD pipeline configuration for GitLab CI and GitHub Actio
 Write your GitLab CI pipelines in Pkl with full type safety and validation. Compile to YAML and catch errors before they break your pipeline.
 
 ```pkl
-amends "package://pkl-lang.org/typed-gitlab-ci@0.1.0/GitLabCI.pkl"
+amends "package://pkl-lang.org/typed-gitlab-ci@1.0.0/GitLabCI.pkl"
 
 stages { "build", "test", "deploy" }
 
@@ -32,7 +32,7 @@ jobs {
 Write your GitHub Actions workflows in Pkl with full type safety and validation. Compile to YAML and catch errors before they break your workflow.
 
 ```pkl
-amends "package://pkl-lang.org/typed-github-actions@0.1.0/GitHubActions.pkl"
+amends "package://pkl-lang.org/typed-github-actions@1.0.0/GitHubActions.pkl"
 
 name = "CI"
 on { push { branches { "main" } } }
@@ -65,11 +65,11 @@ amends "pkl:Project"
 
 dependencies {
   ["typed-gitlab-ci"] {
-    uri = "package://pkl-lang.org/typed-gitlab-ci@0.1.0"
+    uri = "package://pkl-lang.org/typed-gitlab-ci@1.0.0"
   }
   // or
   ["typed-github-actions"] {
-    uri = "package://pkl-lang.org/typed-github-actions@0.1.0"
+    uri = "package://pkl-lang.org/typed-github-actions@1.0.0"
   }
 }
 ```
@@ -79,6 +79,7 @@ Then resolve dependencies:
 ```bash
 pkl project resolve
 ```
+
 For more information, check out the template-specific READMEs.
 
 ## License

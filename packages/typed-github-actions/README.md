@@ -2,7 +2,7 @@
 
 Type-safe GitHub Actions workflow configuration using Pkl.
 
-## Overview 
+## Overview
 
 `pkl-github-actions` provides a type-safe way to define GitHub Actions workflows using the [Pkl configuration language](https://pkl-lang.org). Write your workflow YAML files with validation, and type checking.
 
@@ -17,7 +17,7 @@ amends "pkl:Project"
 
 dependencies {
   ["typed-github-actions"] {
-    uri = "package://pkl-lang.org/typed-github-actions@0.1.0"
+    uri = "package://pkl-lang.org/typed-github-actions@1.0.0"
   }
 }
 ```
@@ -33,7 +33,7 @@ pkl project resolve
 You can also import directly using the package URI:
 
 ```pkl
-import "package://pkl-lang.org/typed-github-actions@0.1.0/GitHubActions.pkl"
+import "package://pkl-lang.org/typed-github-actions@1.0.0/GitHubActions.pkl"
 ```
 
 ## Quick Start
@@ -41,7 +41,7 @@ import "package://pkl-lang.org/typed-github-actions@0.1.0/GitHubActions.pkl"
 Create a file `ci-workflow.pkl`:
 
 ```pkl
-amends "package://pkl-lang.org/typed-github-actions@0.1.0/GitHubActions.pkl"
+amends "package://pkl-lang.org/typed-github-actions@1.0.0/GitHubActions.pkl"
 
 output {
   renderer = new YamlRenderer {}
@@ -59,13 +59,13 @@ on {
 jobs {
   ["build"] {
     `runs-on` = "ubuntu-latest"
-    
+
     steps {
       new {
         name = "Checkout code"
         uses = "actions/checkout@v4"
       }
-      
+
       new {
         name = "Setup Node.js"
         uses = "actions/setup-node@v4"
@@ -73,7 +73,7 @@ jobs {
           ["node-version"] = "20"
         }
       }
-      
+
       new {
         name = "Install and build"
         run = """
@@ -136,14 +136,14 @@ Common validations include:
 jobs {
   ["test"] {
     `runs-on` = "ubuntu-latest"
-    
+
     strategy {
       matrix {
         node { "18", "20", "22" }
         os { "ubuntu-latest", "windows-latest", "macos-latest" }
       }
     }
-    
+
     steps {
       new {
         name = "Setup Node.js ${{ matrix.node }}"
@@ -167,7 +167,7 @@ jobs {
       new { run = "make build" }
     }
   }
-  
+
   ["test"] {
     `runs-on` = "ubuntu-latest"
     needs { "build" }  // Runs after build completes
@@ -185,7 +185,7 @@ jobs {
   ["deploy"] {
     `runs-on` = "ubuntu-latest"
     `if` = "github.ref == 'refs/heads/main'"
-    
+
     steps {
       new {
         name = "Deploy to production"
@@ -202,11 +202,11 @@ jobs {
 jobs {
   ["deploy"] {
     `runs-on` = "ubuntu-latest"
-    
+
     env {
       ["NODE_ENV"] = "production"
     }
-    
+
     steps {
       new {
         name = "Deploy"
@@ -226,12 +226,12 @@ jobs {
 jobs {
   ["deploy"] {
     `runs-on` = "ubuntu-latest"
-    
+
     environment {
       name = "production"
       url = "https://example.com"
     }
-    
+
     steps {
       new {
         name = "Deploy to production"
