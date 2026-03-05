@@ -6,7 +6,7 @@ module typed.gitlab.ci.Include
 /// Include external configuration
 class Include {
   /// Local file path
-  local: String?
+  `local`: String?
   
   /// Remote URL
   remote: String?
@@ -34,7 +34,7 @@ class Include {
   
   /// Validates that exactly one include type is specified
   hidden validIncludeType: Boolean =
-    List(local, remote, template, project).filter((it) -> it != null).length == 1
+    List(`local`, remote, template, project).filter((it) -> it != null).length == 1
 }
 
 /// Rule for conditional inclusion

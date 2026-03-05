@@ -12,55 +12,58 @@ import "Job.pkl"
 import "Variable.pkl"
 import "Include.pkl"
 import "Cache.pkl"
+import "Artifact.pkl"
 
 output {
-  renderer = new YamlRenderer {}
+  renderer = new YamlRenderer {
+    omitNullProperties = true
+  }
 }
 
 /// Global variables
-variables: Mapping<String, String|Variable>?
+variables: Mapping<String, String|Variable>? = null
 
 /// Pipeline stages (ordered)
-stages: Listing<String>?
+stages: Listing<String>? = null
 
 /// Default settings for all jobs
-default: DefaultSettings?
+default: DefaultSettings? = null
 
 /// Include external configurations
-include: Listing<Include>?
+include: Listing<Include>? = null
 
 /// Jobs defined in this pipeline
 jobs: Mapping<String, Job>
 
 /// Workflow configuration
-workflow: WorkflowConfig?
+workflow: WorkflowConfig? = null
 
 /// Global image
-image: String|Job.ImageConfig?
+image: (String|Job.ImageConfig)? = null
 
 /// Global services
-services: Listing<String|Job.ServiceConfig>?
+services: Listing<String|Job.ServiceConfig>? = null
 
 /// Global before_script
-before_script: Listing<String>?
+before_script: Listing<String>? = null
 
 /// Global after_script
-after_script: Listing<String>?
+after_script: Listing<String>? = null
 
 /// Global cache
-cache: Cache|Listing<Cache>?
+cache: (Cache|Listing<Cache>)? = null
 
 /// Global retry
-retry: Int|Job.RetryConfig?
+retry: (Int|Job.RetryConfig)? = null
 
 /// Global timeout
-timeout: String?
+timeout: String? = null
 
 /// Global interruptible
-interruptible: Boolean?
+interruptible: Boolean? = null
 
 /// Global tags
-tags: Listing<String>?
+tags: Listing<String>? = null
 
 /// Validates that all job stage references exist in the stages list
 hidden stagesValid: Boolean = 
@@ -127,7 +130,7 @@ class DefaultSettings {
   tags: Listing<String>?
   
   /// Default artifacts
-  artifacts: Job.Artifact?
+  artifacts: Artifact?
 }
 
 /// Workflow configuration
@@ -137,6 +140,18 @@ class WorkflowConfig {
   
   /// Pipeline name
   name: String?
+  
+  /// Auto-cancel configuration
+  auto_cancel: AutoCancelConfig?
+}
+
+/// Auto-cancel configuration for pipelines
+class AutoCancelConfig {
+  /// Cancel behavior on new commits
+  on_new_commit: ("conservative"|"interruptible"|"none")?
+  
+  /// Cancel behavior on new push
+  on_job_failure: ("all"|"none")?
 }
 
 /// Workflow rule
