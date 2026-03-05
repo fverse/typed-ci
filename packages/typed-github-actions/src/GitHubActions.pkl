@@ -41,6 +41,31 @@ permissions: Job.Permissions|"read-all"|"write-all"?
 /// Run name (displayed in GitHub UI for workflow runs)
 `run-name`: String?
 
+/// Known GitHub Actions event names
+local validEventNames: List<String> = List(
+  "branch_protection_rule", "check_run", "check_suite", "create", "delete",
+  "deployment", "deployment_status", "discussion", "discussion_comment",
+  "fork", "gollum", "issue_comment", "issues", "label", "merge_group",
+  "milestone", "page_build", "project", "project_card", "project_column",
+  "public", "pull_request", "pull_request_review", "pull_request_review_comment",
+  "pull_request_target", "push", "registry_package", "release",
+  "repository_dispatch", "schedule", "status", "watch",
+  "workflow_call", "workflow_dispatch", "workflow_run"
+)
+
+/// Constraint: Event names must be valid GitHub Actions events
+local `_validateEventNames` = on.keys.every((eventName) ->
+  validEventNames.contains(eventName)
+) || throw("""
+  Workflow validation failed: Unknown event name(s) in 'on'.
+  
+  Invalid events: \(on.keys.filter((name) -> !validEventNames.contains(name)))
+  
+  Valid events include: push, pull_request, pull_request_target, schedule, workflow_dispatch, workflow_call, release, issues, issue_comment, create, delete, deployment, and others.
+  
+  Fix: Use a valid GitHub Actions event name.
+  """)
+
 /// Constraint: Workflow must have at least one job
 local `_` = if (jobs.isEmpty) throw("""
   Workflow validation failed: A workflow must have at least one job.
