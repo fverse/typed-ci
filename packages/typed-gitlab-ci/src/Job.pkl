@@ -90,6 +90,12 @@ class Job {
   /// Only/except (deprecated, use rules instead)
   only: OnlyExceptConfig?
   except: OnlyExceptConfig?
+  
+  /// Inherit configuration
+  ///
+  /// Controls which global defaults this job inherits.
+  /// Set to false to inherit nothing, or use InheritConfig to pick specific keys.
+  inherit: Boolean|InheritConfig?
 }
 
 /// Image configuration
@@ -242,4 +248,21 @@ class OnlyExceptConfig {
   variables: Listing<String>?
   changes: Listing<String>?
   kubernetes: ("active")?
+}
+
+/// Inherit configuration
+///
+/// Controls which global keywords are inherited by a job.
+/// Use `default` to control inheritance from the `default:` block,
+/// and `variables` to control inheritance of global variables.
+class InheritConfig {
+  /// Control inheritance of default keywords
+  ///
+  /// Set to false to inherit no defaults, or provide a list of specific keywords to inherit.
+  default: Boolean|Listing<"image"|"services"|"before_script"|"after_script"|"cache"|"retry"|"timeout"|"interruptible"|"tags"|"artifacts">?
+  
+  /// Control inheritance of global variables
+  ///
+  /// Set to false to inherit no variables, or provide a list of specific variable names to inherit.
+  variables: Boolean|Listing<String>?
 }
