@@ -54,7 +54,7 @@ class Step {
   
   /// Constraint: Step must have either 'uses' or 'run'
   local step = this
-  local _ = if (!isValid) throw("""
+  local `_validateUsesOrRun` = if (!isValid) throw("""
     Step validation failed: A step must specify exactly one of 'uses' or 'run'.
     
     Current configuration:
@@ -77,7 +77,7 @@ class Step {
     """) else true
   
   /// Constraint: 'with' can only be used with 'uses'
-  local _ = if (with != null && uses == null) throw("""
+  local `_validateWithRequiresUses` = if (with != null && uses == null) throw("""
     Step validation failed: The 'with' parameter can only be used when 'uses' is specified.
     
     Current configuration has 'with' but no 'uses'.
@@ -86,7 +86,7 @@ class Step {
     """) else true
   
   /// Constraint: Action reference should be valid format
-  local _ = if (uses != null && !uses.matches(Regex(#"^[a-zA-Z0-9_-]+/[a-zA-Z0-9_-]+@.+$|^\./.*$"#))) throw("""
+  local `_validateActionRef` = if (uses != null && !uses.matches(Regex(#"^[a-zA-Z0-9_-]+/[a-zA-Z0-9_-]+@.+$|^\./.*$"#))) throw("""
     Step validation failed: Invalid action reference format.
     
     Action reference: \(uses)
