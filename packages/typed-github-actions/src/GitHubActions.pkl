@@ -14,7 +14,7 @@ name: String
 /// Simple event: `on = "push"`
 /// Multiple events: `on = List("push", "pull_request")`
 /// Configured events: `on { push { branches = List("main") } }`
-on: Mapping<String, Event.PushEvent|Event.PullRequestEvent|Event.ScheduleEvent|Event.WorkflowDispatchEvent|Event.WorkflowCallEvent|Listing<Event.ScheduleEvent>|Mapping>
+on: Mapping<String, Event.PushEvent|Event.PullRequestEvent|Event.PullRequestTargetEvent|Event.ScheduleEvent|Event.WorkflowDispatchEvent|Event.WorkflowCallEvent|Event.ReleaseEvent|Event.IssuesEvent|Event.IssueCommentEvent|Event.CreateEvent|Event.DeleteEvent|Event.DeploymentEvent|Event.DeploymentStatusEvent|Event.RepositoryDispatchEvent|Event.WorkflowRunEvent|Event.MergeGroupEvent|Event.WatchEvent|Event.ForkEvent|Event.CheckRunEvent|Event.CheckSuiteEvent|Listing<Event.ScheduleEvent>|Mapping>
 
 /// Environment variables for all jobs
 env: Mapping<String, String>?

@@ -22,21 +22,21 @@ class PushEvent {
   `paths-ignore`: Listing<String>?
   
   /// Constraint: Cannot use both 'branches' and 'branches-ignore'
-  local _ = if (branches != null && `branches-ignore` != null) throw("""
+  local `_validateBranches` = if (branches != null && `branches-ignore` != null) throw("""
     Push event validation failed: Cannot use both 'branches' and 'branches-ignore'.
     
     Fix: Use either 'branches' to include specific branches, or 'branches-ignore' to exclude branches.
     """) else true
   
   /// Constraint: Cannot use both 'tags' and 'tags-ignore'
-  local _ = if (tags != null && `tags-ignore` != null) throw("""
+  local `_validateTags` = if (tags != null && `tags-ignore` != null) throw("""
     Push event validation failed: Cannot use both 'tags' and 'tags-ignore'.
     
     Fix: Use either 'tags' to include specific tags, or 'tags-ignore' to exclude tags.
     """) else true
   
   /// Constraint: Cannot use both 'paths' and 'paths-ignore'
-  local _ = if (paths != null && `paths-ignore` != null) throw("""
+  local `_validatePaths` = if (paths != null && `paths-ignore` != null) throw("""
     Push event validation failed: Cannot use both 'paths' and 'paths-ignore'.
     
     Fix: Use either 'paths' to include specific paths, or 'paths-ignore' to exclude paths.
@@ -61,14 +61,14 @@ class PullRequestEvent {
   `paths-ignore`: Listing<String>?
   
   /// Constraint: Cannot use both 'branches' and 'branches-ignore'
-  local _ = if (branches != null && `branches-ignore` != null) throw("""
+  local `_validateBranches` = if (branches != null && `branches-ignore` != null) throw("""
     Pull request event validation failed: Cannot use both 'branches' and 'branches-ignore'.
     
     Fix: Use either 'branches' to include specific branches, or 'branches-ignore' to exclude branches.
     """) else true
   
   /// Constraint: Cannot use both 'paths' and 'paths-ignore'
-  local _ = if (paths != null && `paths-ignore` != null) throw("""
+  local `_validatePaths` = if (paths != null && `paths-ignore` != null) throw("""
     Pull request event validation failed: Cannot use both 'paths' and 'paths-ignore'.
     
     Fix: Use either 'paths' to include specific paths, or 'paths-ignore' to exclude paths.
@@ -114,7 +114,7 @@ class WorkflowInput {
   options: Listing<String>?
   
   /// Constraint: 'options' is required when type is 'choice'
-  local _ = if (type == "choice" && (options == null || options.isEmpty)) throw("""
+  local `_validateChoiceOptions` = if (type == "choice" && (options == null || options.isEmpty)) throw("""
     Workflow input validation failed: Input type 'choice' requires 'options' to be specified.
     
     Fix: Provide a list of options for the choice input.
@@ -127,7 +127,7 @@ class WorkflowInput {
     """) else true
   
   /// Constraint: 'options' should only be used with 'choice' type
-  local _ = if (options != null && type != "choice") throw("""
+  local `_validateOptionsType` = if (options != null && type != "choice") throw("""
     Workflow input validation failed: 'options' can only be used with type 'choice'.
     
     Current type: \(type)
@@ -208,4 +208,121 @@ class WorkflowCallOutput {
   
   /// Value expression
   value: String
+}
+
+/// Pull request target event configuration
+/// Similar to PullRequestEvent but runs in the context of the base branch
+class PullRequestTargetEvent {
+  /// Activity types that trigger the workflow
+  types: Listing<"opened"|"synchronize"|"reopened"|"closed"|"assigned"|"unassigned"|"labeled"|"unlabeled"|"edited"|"ready_for_review"|"review_requested"|"review_request_removed">?
+  
+  /// Branches to trigger on
+  branches: Listing<String>?
+  
+  /// Branch patterns to ignore
+  `branches-ignore`: Listing<String>?
+  
+  /// Paths to trigger on
+  paths: Listing<String>?
+  
+  /// Path patterns to ignore
+  `paths-ignore`: Listing<String>?
+  
+  /// Constraint: Cannot use both 'branches' and 'branches-ignore'
+  local `_validateBranches` = if (branches != null && `branches-ignore` != null) throw("""
+    Pull request target event validation failed: Cannot use both 'branches' and 'branches-ignore'.
+    """) else true
+  
+  /// Constraint: Cannot use both 'paths' and 'paths-ignore'
+  local `_validatePaths` = if (paths != null && `paths-ignore` != null) throw("""
+    Pull request target event validation failed: Cannot use both 'paths' and 'paths-ignore'.
+    """) else true
+}
+
+/// Release event configuration
+class ReleaseEvent {
+  /// Activity types that trigger the workflow
+  types: Listing<"published"|"unpublished"|"created"|"edited"|"deleted"|"prereleased"|"released">?
+}
+
+/// Issues event configuration
+class IssuesEvent {
+  /// Activity types that trigger the workflow
+  types: Listing<"opened"|"edited"|"deleted"|"transferred"|"pinned"|"unpinned"|"closed"|"reopened"|"assigned"|"unassigned"|"labeled"|"unlabeled"|"locked"|"unlocked"|"milestoned"|"demilestoned">?
+}
+
+/// Issue comment event configuration
+class IssueCommentEvent {
+  /// Activity types that trigger the workflow
+  types: Listing<"created"|"edited"|"deleted">?
+}
+
+/// Create event configuration (branch or tag creation)
+class CreateEvent {
+}
+
+/// Delete event configuration (branch or tag deletion)
+class DeleteEvent {
+}
+
+/// Deployment event configuration
+class DeploymentEvent {
+}
+
+/// Deployment status event configuration
+class DeploymentStatusEvent {
+}
+
+/// Repository dispatch event configuration (custom webhook)
+class RepositoryDispatchEvent {
+  /// Event types to filter on
+  types: Listing<String>?
+}
+
+/// Workflow run event configuration
+class WorkflowRunEvent {
+  /// Activity types that trigger the workflow
+  types: Listing<"completed"|"requested"|"in_progress">?
+  
+  /// Workflows to trigger on
+  workflows: Listing<String>?
+  
+  /// Branches to trigger on
+  branches: Listing<String>?
+  
+  /// Branch patterns to ignore
+  `branches-ignore`: Listing<String>?
+  
+  /// Constraint: Cannot use both 'branches' and 'branches-ignore'
+  local `_validateBranches` = if (branches != null && `branches-ignore` != null) throw("""
+    Workflow run event validation failed: Cannot use both 'branches' and 'branches-ignore'.
+    """) else true
+}
+
+/// Merge group event configuration
+class MergeGroupEvent {
+  /// Activity types that trigger the workflow
+  types: Listing<"checks_requested">?
+}
+
+/// Watch event configuration (star)
+class WatchEvent {
+  /// Activity types that trigger the workflow
+  types: Listing<"started">?
+}
+
+/// Fork event configuration
+class ForkEvent {
+}
+
+/// Check run event configuration
+class CheckRunEvent {
+  /// Activity types that trigger the workflow
+  types: Listing<"created"|"rerequested"|"completed"|"requested_action">?
+}
+
+/// Check suite event configuration
+class CheckSuiteEvent {
+  /// Activity types that trigger the workflow
+  types: Listing<"completed"|"requested"|"rerequested">?
 }
