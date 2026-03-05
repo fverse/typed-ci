@@ -87,6 +87,18 @@ class Job {
   /// Interruptible flag
   interruptible: Boolean?
   
+  /// ID tokens for OIDC authentication
+  ///
+  /// Used for keyless authentication with cloud providers and services.
+  /// Each token is identified by a name and configured with an audience.
+  ///
+  /// Example:
+  ///   id_tokens {
+  ///     ["AWS_TOKEN"] { aud = "https://aws.example.com" }
+  ///     ["GCP_TOKEN"] { aud = "https://gcp.example.com" }
+  ///   }
+  id_tokens: Mapping<String, IdToken>?
+
   /// Only/except (deprecated, use rules instead)
   only: OnlyExceptConfig?
   except: OnlyExceptConfig?
@@ -265,4 +277,15 @@ class InheritConfig {
   ///
   /// Set to false to inherit no variables, or provide a list of specific variable names to inherit.
   variables: Boolean|Listing<String>?
+}
+
+/// ID token configuration for OIDC authentication
+///
+/// Configures a JSON Web Token (JWT) for keyless authentication
+/// with cloud providers and external services.
+class IdToken {
+  /// The audience claim for the token
+  ///
+  /// Typically the URL of the service the token is intended for.
+  aud: String|Listing<String>
 }
