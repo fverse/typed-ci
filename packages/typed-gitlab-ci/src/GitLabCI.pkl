@@ -60,6 +60,15 @@ open class Pipeline {
       job.stage == null || stages.contains(job.stage)
     )
   
+  /// Constraint: Enforce stage references
+  local `_validateStages` = if (!stagesValid) throw("""
+    Pipeline validation failed: One or more jobs reference stages not defined in the 'stages' list.
+    
+    Defined stages: \(stages)
+    
+    Fix: Ensure every job's 'stage' value is listed in the pipeline's 'stages'.
+    """) else true
+  
   /// Validates that all job needs references exist
   hidden needsValid: Boolean =
     jobs.values.every((job) ->
@@ -69,6 +78,15 @@ open class Pipeline {
         need is Job.NeedConfig && (need.project != null || jobs.containsKey(need.job))
       )
     )
+  
+  /// Constraint: Enforce needs references
+  local `_validateNeeds` = if (!needsValid) throw("""
+    Pipeline validation failed: One or more jobs reference non-existent jobs in 'needs'.
+    
+    Available jobs: \(jobs.keys)
+    
+    Fix: Ensure every job name in 'needs' exists in the pipeline, or uses 'project' for cross-project dependencies.
+    """) else true
 }
 
 /// Default settings for all jobs
