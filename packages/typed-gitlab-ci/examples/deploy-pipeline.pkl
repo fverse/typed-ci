@@ -9,11 +9,7 @@
 /// To use this example:
 /// 1. Render to YAML: pkl eval -f yaml deploy-pipeline.pkl > .gitlab-ci.yml
 /// 2. Commit the generated .gitlab-ci.yml to your repository
-module deploy.pipeline
-
-output {
-  renderer = new YamlRenderer {}
-}
+amends "../src/GitLabCI.pkl"
 
 variables {
   ["DOCKER_REGISTRY"] = "registry.example.com"

@@ -1,4 +1,11 @@
 /// GitLab CI Pipeline Configuration
+///
+/// Amend this module to define a type-safe GitLab CI pipeline.
+///
+/// Example:
+///   amends "../src/GitLabCI.pkl"
+///   stages { "build"; "test" }
+///   jobs { ["build"] { stage = "build"; script { "make build" } } }
 module typed.gitlab.ci.GitLabCI
 
 import "Job.pkl"
@@ -6,88 +13,89 @@ import "Variable.pkl"
 import "Include.pkl"
 import "Cache.pkl"
 
-/// Root configuration for .gitlab-ci.yml
-open class Pipeline {
-  /// Global variables
-  variables: Mapping<String, String|Variable>?
-  
-  /// Pipeline stages (ordered)
-  stages: Listing<String>?
-  
-  /// Default settings for all jobs
-  default: DefaultSettings?
-  
-  /// Include external configurations
-  include: Listing<Include>?
-  
-  /// Jobs defined in this pipeline
-  jobs: Mapping<String, Job>
-  
-  /// Workflow configuration
-  workflow: WorkflowConfig?
-  
-  /// Global image
-  image: String|Job.ImageConfig?
-  
-  /// Global services
-  services: Listing<String|Job.ServiceConfig>?
-  
-  /// Global before_script
-  before_script: Listing<String>?
-  
-  /// Global after_script
-  after_script: Listing<String>?
-  
-  /// Global cache
-  cache: Cache|Listing<Cache>?
-  
-  /// Global retry
-  retry: Int|Job.RetryConfig?
-  
-  /// Global timeout
-  timeout: String?
-  
-  /// Global interruptible
-  interruptible: Boolean?
-  
-  /// Global tags
-  tags: Listing<String>?
-  
-  /// Validates that all job stage references exist in the stages list
-  hidden stagesValid: Boolean = 
-    stages == null || 
-    jobs.values.every((job) -> 
-      job.stage == null || stages.contains(job.stage)
-    )
-  
-  /// Constraint: Enforce stage references
-  local `_validateStages` = if (!stagesValid) throw("""
-    Pipeline validation failed: One or more jobs reference stages not defined in the 'stages' list.
-    
-    Defined stages: \(stages)
-    
-    Fix: Ensure every job's 'stage' value is listed in the pipeline's 'stages'.
-    """) else true
-  
-  /// Validates that all job needs references exist
-  hidden needsValid: Boolean =
-    jobs.values.every((job) ->
-      job.needs == null ||
-      job.needs.every((need) ->
-        need is String && jobs.containsKey(need) ||
-        need is Job.NeedConfig && (need.project != null || jobs.containsKey(need.job))
-      )
-    )
-  
-  /// Constraint: Enforce needs references
-  local `_validateNeeds` = if (!needsValid) throw("""
-    Pipeline validation failed: One or more jobs reference non-existent jobs in 'needs'.
-    
-    Available jobs: \(jobs.keys)
-    
-    Fix: Ensure every job name in 'needs' exists in the pipeline, or uses 'project' for cross-project dependencies.
-    """) else true
+output {
+  renderer = new YamlRenderer {}
 }
+
+/// Global variables
+variables: Mapping<String, String|Variable>?
+
+/// Pipeline stages (ordered)
+stages: Listing<String>?
+
+/// Default settings for all jobs
+default: DefaultSettings?
+
+/// Include external configurations
+include: Listing<Include>?
+
+/// Jobs defined in this pipeline
+jobs: Mapping<String, Job>
+
+/// Workflow configuration
+workflow: WorkflowConfig?
+
+/// Global image
+image: String|Job.ImageConfig?
+
+/// Global services
+services: Listing<String|Job.ServiceConfig>?
+
+/// Global before_script
+before_script: Listing<String>?
+
+/// Global after_script
+after_script: Listing<String>?
+
+/// Global cache
+cache: Cache|Listing<Cache>?
+
+/// Global retry
+retry: Int|Job.RetryConfig?
+
+/// Global timeout
+timeout: String?
+
+/// Global interruptible
+interruptible: Boolean?
+
+/// Global tags
+tags: Listing<String>?
+
+/// Validates that all job stage references exist in the stages list
+hidden stagesValid: Boolean = 
+  stages == null || 
+  jobs.values.every((job) -> 
+    job.stage == null || stages.contains(job.stage)
+  )
+
+/// Constraint: Enforce stage references
+local `_validateStages` = if (!stagesValid) throw("""
+  Pipeline validation failed: One or more jobs reference stages not defined in the 'stages' list.
+  
+  Defined stages: \(stages)
+  
+  Fix: Ensure every job's 'stage' value is listed in the pipeline's 'stages'.
+  """) else true
+
+/// Validates that all job needs references exist
+hidden needsValid: Boolean =
+  jobs.values.every((job) ->
+    job.needs == null ||
+    job.needs.every((need) ->
+      need is String && jobs.containsKey(need) ||
+      need is Job.NeedConfig && (need.project != null || jobs.containsKey(need.job))
+    )
+  )
+
+/// Constraint: Enforce needs references
+local `_validateNeeds` = if (!needsValid) throw("""
+  Pipeline validation failed: One or more jobs reference non-existent jobs in 'needs'.
+  
+  Available jobs: \(jobs.keys)
+  
+  Fix: Ensure every job name in 'needs' exists in the pipeline, or uses 'project' for cross-project dependencies.
+  """) else true
 
 /// Default settings for all jobs
 class DefaultSettings {

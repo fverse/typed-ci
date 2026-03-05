@@ -10,11 +10,7 @@
 /// 1. Render to YAML: pkl eval -f yaml deploy-workflow.pkl > .github/workflows/deploy.yml
 /// 2. Commit the generated workflow file to your repository
 /// 3. Configure environment secrets in GitHub repository settings
-module deploy.workflow
-
-output {
-  renderer = new YamlRenderer {}
-}
+amends "../src/GitHubActions.pkl"
 
 name = "Deploy Application"
 

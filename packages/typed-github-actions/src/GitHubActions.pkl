@@ -4,6 +4,10 @@ module typed.github.actions.GitHubActions
 import "Job.pkl"
 import "Event.pkl"
 
+output {
+  renderer = new YamlRenderer {}
+}
+
 /// Workflow name (displayed in GitHub UI)
 name: String
 

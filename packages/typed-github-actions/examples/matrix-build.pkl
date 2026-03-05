@@ -6,11 +6,7 @@
 /// To use this example:
 /// 1. Render to YAML: pkl eval -f yaml matrix-build.pkl > .github/workflows/matrix-build.yml
 /// 2. Commit the generated workflow file to your repository
-module matrix.build
-
-output {
-  renderer = new YamlRenderer {}
-}
+amends "../src/GitHubActions.pkl"
 
 name = "Matrix Build"
 
