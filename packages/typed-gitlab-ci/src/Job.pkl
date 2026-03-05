@@ -4,7 +4,6 @@ import "Artifact.pkl"
 import "Cache.pkl"
 import "Variable.pkl"
 import "Rule.pkl"
-import "../../../common/src/Duration.pkl"
 
 /// GitLab CI job configuration
 class Job {

@@ -1,7 +1,5 @@
 module typed.gitlab.ci.Artifact
 
-import "../../../common/src/Duration.pkl"
-
 /// Artifact configuration
 class Artifact {
   /// Paths to include as artifacts
