@@ -87,6 +87,18 @@ class Job {
   /// Interruptible flag
   interruptible: Boolean?
   
+  /// Secrets from external secret managers
+  ///
+  /// Pull secrets from HashiCorp Vault or other providers at runtime.
+  ///
+  /// Example:
+  ///   secrets {
+  ///     ["DATABASE_PASSWORD"] {
+  ///       vault = "production/db/password@secrets"
+  ///     }
+  ///   }
+  secrets: Mapping<String, SecretConfig>?
+  
   /// ID tokens for OIDC authentication
   ///
   /// Used for keyless authentication with cloud providers and services.
@@ -288,4 +300,64 @@ class IdToken {
   ///
   /// Typically the URL of the service the token is intended for.
   aud: String|Listing<String>
+}
+
+/// Secret configuration
+///
+/// Defines how to retrieve a secret from an external secret manager.
+class SecretConfig {
+  /// Vault secret path (shorthand)
+  ///
+  /// Format: "engine/path/field@mount" or "engine/path/field"
+  vault: String|VaultConfig?
+  
+  /// GCP Secret Manager configuration
+  gcp_secret_manager: GcpSecretConfig?
+  
+  /// Azure Key Vault configuration
+  azure_key_vault: AzureKeyVaultConfig?
+  
+  /// File or variable
+  ///
+  /// When true, the secret is stored as a file. When false (default), stored as a variable.
+  file: Boolean?
+  
+  /// Token for accessing the secret
+  token: String?
+}
+
+/// Vault secret configuration (detailed form)
+class VaultConfig {
+  /// Secret engine name
+  engine: String
+  
+  /// Secret path
+  path: String
+  
+  /// Secret field
+  field: String
+}
+
+/// GCP Secret Manager configuration
+class GcpSecretConfig {
+  /// Secret name in GCP Secret Manager
+  name: String(
+    !isEmpty,
+    "GCP secret name cannot be empty"
+  )
+  
+  /// Secret version
+  version: String?
+}
+
+/// Azure Key Vault secret configuration
+class AzureKeyVaultConfig {
+  /// Secret name in Azure Key Vault
+  name: String(
+    !isEmpty,
+    "Azure Key Vault secret name cannot be empty"
+  )
+  
+  /// Secret version
+  version: String?
 }
